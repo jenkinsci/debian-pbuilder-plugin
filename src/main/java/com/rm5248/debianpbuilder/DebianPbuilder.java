@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,37 +35,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Sample {@link Builder}.
- *
- * <p>
- * When the user configures the project and enables this builder,
- * {@link DescriptorImpl#newInstance(StaplerRequest)} is invoked
- * and a new {@link DebianPbuilder} is created. The created
- * instance is persisted to the project configuration XML by using
- * XStream, so this allows you to use instance fields (like {@link #name})
- * to remember the configuration.
- *
- * <p>
- * When a build is performed, the {@link #perform(AbstractBuild, Launcher, BuildListener)}
- * method will be invoked. 
- *
- * @author Kohsuke Kawaguchi
+ * Jenkins plugin that builds Debian packages in a pbuilder/cowbuilder environement.
+ * 
+ * Based off of: https://jenkins-debian-glue.org/
+ * 
+ * The reason for having this as an actual plugin instead of the scripts is so that
+ * we can have builders on different machines that can all communicate back to the 
+ * master Jenkins instance.
  */
 public class DebianPbuilder extends Builder {
 
-    private final String name;
+    private final int numberCores;
 
-    // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public DebianPbuilder(String name) {
-        this.name = name;
+    public DebianPbuilder(int numberCores) {
+        this.numberCores = numberCores;
     }
 
-    /**
-     * We'll use this from the <tt>config.jelly</tt>.
-     */
-    public String getName() {
-        return name;
+    public int getNumberCores(){
+        return numberCores;
     }
 
     @Override
@@ -173,18 +163,14 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
-        // This is where you 'build' the project.
-        // Since this is a dummy, we just say 'hello world' and call that a build.
-
-        // This also shows how you can consult the global configuration of the builder
-        if (getDescriptor().getUseFrench())
-            listener.getLogger().println("Bonjour, "+name+"!");
-        else
-            listener.getLogger().println("Hello, "+name+"! WHUT WHUT");
         
-        listener.getLogger().println( build.getWorkspace() );
+        Map<String,String> files = new HashMap<String,String>();
+        for( FilePath path : binariesLocation.list() ){
+            files.put( path.getName(), path.getName() );
+        }
         
-        
+        build.getArtifactManager().archive( binariesLocation, launcher, listener, files );
+                
         return true;
     }
     
@@ -328,7 +314,7 @@ public class DebianPbuilder extends Builder {
     private String getEmail( Launcher launcher ) throws IOException, InterruptedException{
         String email = getDescriptor().getJenkinsEmail();
         
-        if( email == null ){
+        if( email == null || email.length() == 0 ){
             Launcher.ProcStarter procStarter = launcher
                 .launch()
                 .cmds( "hostname" )
@@ -439,14 +425,7 @@ public class DebianPbuilder extends Builder {
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        /**
-         * To persist global configuration information,
-         * simply store it in a field and call save().
-         *
-         * <p>
-         * If you don't want fields to be persisted, use <tt>transient</tt>.
-         */
-        private boolean useFrench;
+        
         private String jenkinsEmail;
 
         /**
@@ -459,10 +438,25 @@ public class DebianPbuilder extends Builder {
          */
         public FormValidation doCheckName(@QueryParameter String value)
                 throws IOException, ServletException {
-            if (value.length() == 0)
-                return FormValidation.error("Please set a name");
-            if (value.length() < 4)
-                return FormValidation.warning("Isn't the name too short?");
+            return FormValidation.ok();
+        }
+        
+        public FormValidation doCheckNumberCores(@QueryParameter String value ){
+            int i;
+            try{
+                i = Integer.parseInt( value );
+            }catch( NumberFormatException ex ){
+                return FormValidation.error( "That is not a valid number" );
+            }
+            
+            if( i == 0 ){
+                return FormValidation.error( "Number of cores cannot be 0" );
+            }
+            
+            if( i < 0 && i != -1 ){
+                return FormValidation.error( "Use -1 to use all available cores" );
+            }
+            
             return FormValidation.ok();
         }
 
@@ -475,28 +469,14 @@ public class DebianPbuilder extends Builder {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Say hello world";
+            return "Debian Pbuilder";
         }
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            // To persist global configuration information,
-            // set that to properties and call save().
-            useFrench = formData.getBoolean("useFrench");
-            // ^Can also use req.bindJSON(this, formData);
-            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
+            jenkinsEmail = formData.getString( "jenkinsEmail" );
             save();
             return super.configure(req,formData);
-        }
-
-        /**
-         * This method returns true if the global configuration says we should speak French.
-         *
-         * The method name is bit awkward because global.jelly calls this method to determine
-         * the initial state of the checkbox by the naming convention.
-         */
-        public boolean getUseFrench() {
-            return useFrench;
         }
         
         public String getJenkinsEmail(){
