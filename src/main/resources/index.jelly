@@ -1,0 +1,7 @@
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+  The DebianPbuilder plugin allows you to build Debian packages in a pbuilder 
+    environment.
+</div>
