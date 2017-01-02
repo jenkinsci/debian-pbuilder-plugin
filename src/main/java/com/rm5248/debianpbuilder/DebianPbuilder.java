@@ -134,7 +134,11 @@ public class DebianPbuilder extends Builder {
         generateChanges(build, launcher, listener, packageName, snapshotVersion);
         
         binariesLocation = build.getWorkspace().createTempDir( "binaries", null );
-        hookdir = build.getWorkspace().createTempFile( "hookdir", null );
+        //hookdir = build.getWorkspace().createTempFile( "hookdir", null );
+        hookdir = build.getWorkspace().child( "hookdir" );
+        if( !hookdir.exists() ){
+            hookdir.mkdirs();
+        }
         
         for( FilePath path : build.getWorkspace().list() ){
             if( path.getName().endsWith( ".dsc" ) ){

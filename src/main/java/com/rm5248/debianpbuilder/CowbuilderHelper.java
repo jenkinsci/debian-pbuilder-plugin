@@ -7,10 +7,13 @@ import hudson.Proc;
 import hudson.model.AbstractBuild;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.FileSystems;
@@ -37,6 +40,8 @@ class CowbuilderHelper {
     private String m_updateLockfile;
     private String m_updateLockfilePid;
     private PrintStream m_logger;
+    private FilePath m_pbuilderrc;
+    private File m_pbuilderrcAsFile;
     
     CowbuilderHelper( AbstractBuild build, Launcher launcher, PrintStream logger, 
             String architecture, String distribution, String hookdir ) throws IOException, InterruptedException {
@@ -59,6 +64,14 @@ class CowbuilderHelper {
         m_buildLockfile = baseLockfile + ".building." + getPID();
         m_updateLockfile = baseLockfile + ".update";
         m_updateLockfilePid = baseLockfile + ".update." + getPID();
+        
+        m_pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
+        m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
+        
+        try( Writer w = new OutputStreamWriter( new FileOutputStream( m_pbuilderrcAsFile ) ) ){
+            w.write( "USENETWORK=yes" );
+            w.write( System.lineSeparator() );
+        }
     }
     
     public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException {         
@@ -88,6 +101,7 @@ class CowbuilderHelper {
             .cmds( "sudo", 
                     "cowbuilder", 
                     "--create", 
+                    "--debug",
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--distribution",
@@ -100,6 +114,7 @@ class CowbuilderHelper {
                     "--arch",
                     "--debootstrapopts",
                     getArch(),
+                    "--debootstrapopts",
                     "--variant=buildd",
                     "--configfile",
                     pbuilderAsFile.getAbsolutePath(),
@@ -117,9 +132,6 @@ class CowbuilderHelper {
     }
     
     private boolean updateCowbuilderBase() throws IOException, InterruptedException {
-        FilePath pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
-        File pbuilderAsFile = new File( pbuilderrc.toURI() );
-        
         Proc proc = null;
         ProcStarter procStarter = m_launcher
             .launch()
@@ -128,10 +140,11 @@ class CowbuilderHelper {
             .cmds( "sudo", 
                     "cowbuilder", 
                     "--update", 
+                    "--debug",
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--configfile",
-                    pbuilderAsFile.getAbsolutePath() );
+                    m_pbuilderrcAsFile.getAbsolutePath() );
         proc = procStarter.start();
         int status = procStarter.join();
         
@@ -152,6 +165,7 @@ class CowbuilderHelper {
         
         newEnv.put( "DIST", m_distribution );
         newEnv.put( "ARCH", m_architecture );
+        newEnv.put( "PATH", "/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin" );
         
         return newEnv;
     }
@@ -222,8 +236,7 @@ class CowbuilderHelper {
         }
     }
     
-    private boolean doBuild( String outputDir, String sourceFile, int numCores ) throws IOException, InterruptedException {
-        FilePath pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
+    private boolean doBuild( String outputDir, String sourceFile, int numCores ) throws IOException, InterruptedException {  
         String debBuildOpts = "-sa";
         String bindMounts;
         String jLevel = String.format( "-j%d", numCores );
@@ -248,7 +261,7 @@ class CowbuilderHelper {
                     "--hookdir",
                     m_hookdir,
                     "--configfile",
-                    new File( pbuilderrc.toURI() ).getAbsolutePath() );
+                    m_pbuilderrcAsFile.getAbsolutePath() );
         proc = procStarter.start();
         int status = procStarter.join();
         

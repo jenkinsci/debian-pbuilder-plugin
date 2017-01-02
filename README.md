@@ -1,1 +1,52 @@
-jenkins plugin for building deb packages based off of https://jenkins-debian-glue.org/
+# Debian Pbuilder
+
+This plugin allows you to build deb packages in a pbuilder environment.
+
+This plugin is based largely off of [jenkins-debian-glue.](https://jenkins-debian-glue.org/)
+
+
+## Installation
+
+As of right now, this is not hosted on jenkins-ci.org because it is still in its early stages.  If there is some interest in either using this plugin and/or another maintainer to help with it, I am willing to move it to jenkins-ci.org and have it be installed automatically.
+
+## Jenkins Configuration
+
+1. Create a new project.
+1. Set the SVN/git repo to use.  Like jenkins-debian-glue, if you are using SVN, set the "Local module directory(optional)" to "source"; if you are using git set "Additional behaviors/Local subdirectory for repo" to "source".
+1. Under 'Build Environment', select 'Delete workspace before build starts'
+2. Under the 'Build' section, add 'Debian Pbuilder'
+3. If you want to use multiple cores/jobs, set the one configuration variable in this section
+4. If you have custom pbuilder hook files that you want to install, install the [Config File Provider Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Config+File+Provider+Plugin) to add in config files.  Set the 'target' option to be `hookdir/<file-name>`
+5. If you set the project up as a multi-configuration project, you can set a user-defined axis as "architecture", with the specific architectures that you want to build for(this is the same as jenkins-debian-glue).
+
+### Global Configuration
+
+The one global configuration option is to set the e-mail address that will be set in the changelog when the plugin updates the changelog.
+
+## System configuration
+
+On any system that is running the build, serveral support programs must be installed and configured properly.  
+
+1. Install needed denpendencies: `apt-get install qemu-user-static devscripts cowbuilder`
+2. Like jenkins-debian-glue, make sure that sudo is configured properly.  As taken from the jenkins-debian-glue webpage, do the following:
+
+  ```
+  jenkins ALL=NOPASSWD: /usr/sbin/cowbuilder, /usr/sbin/chroot
+  Defaults env_keep+="DEB_* DIST ARCH"
+  ```
+
+## Output
+
+The output of all commands(pbuilder, etc) can be found in the console of the build.
+
+Once the project has been built, the output files will be automatically added as artifacts.
+
+The format of the files is the same as a normal deb file.  `package-name_version~<date>.[svn|git]<rev>.<build_number>`.  The reason for using the `~` in the name is that that denotes a pre-release version of software.  
+
+## Troubleshooting
+
+Often, creating the pbuilder directory will fail for some unknown reason.  If that happens, create it manually by going to the 'console output' of the build number and copying the cowbuilder call into a shell and run that.
+
+## License
+
+MIT
