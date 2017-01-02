@@ -209,7 +209,7 @@ class CowbuilderHelper {
         return Integer.parseInt( linked.toFile().getName() );
     }
     
-    boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile ) throws IOException, InterruptedException {
+    boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
@@ -217,15 +217,17 @@ class CowbuilderHelper {
             }
             
             return doBuild( new File( outputDirectory.toURI() ).getAbsolutePath(), 
-                    new File( sourceFile.toURI() ).getAbsolutePath() );
+                    new File( sourceFile.toURI() ).getAbsolutePath(),
+                    numCores );
         }
     }
     
-    private boolean doBuild( String outputDir, String sourceFile ) throws IOException, InterruptedException {
+    private boolean doBuild( String outputDir, String sourceFile, int numCores ) throws IOException, InterruptedException {
         FilePath pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
         String debBuildOpts = "-sa";
         String bindMounts;
-        
+        String jLevel = String.format( "-j%d", numCores );
+               
         Proc proc = null;
         ProcStarter procStarter = m_launcher
             .launch()
@@ -241,6 +243,8 @@ class CowbuilderHelper {
                     m_cowbuilderBase.toString(),
                     "--debbuildopts",
                     debBuildOpts,
+                    "--debbuildopts",
+                    jLevel,
                     "--hookdir",
                     m_hookdir,
                     "--configfile",

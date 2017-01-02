@@ -159,7 +159,7 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
-        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile ) ){
+        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, getNumberOfCores() ) ){
             return false;
         }
         
@@ -405,6 +405,18 @@ public class DebianPbuilder extends Builder {
         }
         
         return toRet.toString();
+    }
+    
+    private int getNumberOfCores(){
+        if( numberCores == -1 ){
+            return Runtime.getRuntime().availableProcessors();
+        }else if( numberCores < -1 ){
+            return 1;
+        }else if( numberCores == 0 ){
+            return 1;
+        }else{
+            return numberCores;
+        }
     }
 
     // Overridden for better type safety.
