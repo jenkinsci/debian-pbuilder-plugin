@@ -140,6 +140,11 @@ public class DebianPbuilder extends Builder {
             hookdir.mkdirs();
         }
         
+        //make sure any files in the hookdir are executable
+        for( FilePath path : hookdir.list() ){
+            path.chmod( 0755 );
+        }
+        
         for( FilePath path : build.getWorkspace().list() ){
             if( path.getName().endsWith( ".dsc" ) ){
                 if( dscFile != null ){
