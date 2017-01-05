@@ -3,4 +3,10 @@
     <f:entry title="Number of cores" field="numberCores">
         <f:textbox default="1"/>
     </f:entry>
+    <f:entry title="Distribution" field="distribution">
+        <f:textbox/>
+    </f:entry>
+    <f:entry title="Mirror Site" field="mirrorSite">
+        <f:textbox/>
+    </f:entry>
 </j:jelly>

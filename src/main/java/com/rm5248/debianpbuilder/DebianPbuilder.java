@@ -28,6 +28,7 @@ import java.io.Writer;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,16 +45,30 @@ import java.util.regex.Pattern;
  * master Jenkins instance.
  */
 public class DebianPbuilder extends Builder {
+    
+    private static final Logger LOGGER = Logger.getLogger( DebianPbuilder.class.getName() );
 
     private final int numberCores;
+    private final String distribution;
+    private final String mirrorSite;
 
     @DataBoundConstructor
-    public DebianPbuilder(int numberCores) {
+    public DebianPbuilder(int numberCores, String distribution, String mirrorSite) {
         this.numberCores = numberCores;
+        this.distribution = distribution;
+        this.mirrorSite = mirrorSite;
     }
 
     public int getNumberCores(){
         return numberCores;
+    }
+    
+    public String getDistribution(){
+        return distribution;
+    }
+    
+    public String getMirrorSite(){
+        return mirrorSite;
     }
 
     @Override
@@ -68,6 +83,7 @@ public class DebianPbuilder extends Builder {
         FilePath binariesLocation;
         FilePath dscFile = null;
         FilePath hookdir = null;
+        PbuilderConfiguration pbuildConfig = new PbuilderConfiguration();
         
         if( !launcher.isUnix() ){
             listener.getLogger().println( "Can't build: not on Unix-like system" );
@@ -156,19 +172,39 @@ public class DebianPbuilder extends Builder {
         }
         
         if( distribution.equalsIgnoreCase( "UNRELEASED" ) ){
-            distribution = getStdoutOfProcess(build, launcher, listener, "lsb_release", "--short", "--codename" );
+            String userSetDistribution = this.distribution;
+            
+            if( userSetDistribution != null && userSetDistribution.length() > 0 ){
+                distribution = userSetDistribution;
+            }else{
+                distribution = getStdoutOfProcess(build, launcher, listener, "lsb_release", "--short", "--codename" );
+                if( distribution == null ){
+                    distribution = "sid";
+                }
+            }
+        }
+        
+        pbuildConfig.setNetwork( true );
+        
+        if( isUbuntu( build, launcher, listener ) ){
+            pbuildConfig.setDebootstrapOpts( "--keyring", "/usr/share/keyrings/debian-archive-keyring.gpg" );
+        }
+        
+        if( mirrorSite != null && mirrorSite.length() > 0 ){
+            pbuildConfig.setMirrorSite( mirrorSite );
         }
         
         //Now that we have our sources, run debootstrap
         cowHelp = new CowbuilderHelper(build, launcher, listener.getLogger(),
                 architecture, distribution, 
-                new File( hookdir.toURI() ).getAbsolutePath() );
+                new File( hookdir.toURI() ).getAbsolutePath(),
+                pbuildConfig);
         
         if( !cowHelp.createOrUpdateCowbuilder() ){
             return false;
         }
         
-        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, getNumberOfCores() ) ){
+        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
             return false;
         }
         
@@ -405,7 +441,7 @@ public class DebianPbuilder extends Builder {
         status = procStarter.join();
         
         if( status != 0 ){
-            return "sid";
+            return null;
         }
         
         Scanner scan = new Scanner( proc.getStdout() );
@@ -416,15 +452,13 @@ public class DebianPbuilder extends Builder {
         return toRet.toString();
     }
     
-    private int getNumberOfCores(){
-        if( numberCores == -1 ){
-            return Runtime.getRuntime().availableProcessors();
-        }else if( numberCores < -1 ){
-            return 1;
-        }else if( numberCores == 0 ){
-            return 1;
+    private boolean isUbuntu( AbstractBuild build, Launcher launcher, BuildListener listener ) throws IOException, InterruptedException {
+        String output = getStdoutOfProcess( build, launcher, listener, "lsb_release", "--id" );
+        
+        if( output.indexOf( "Ubuntu" ) > 0 ){
+            return true;
         }else{
-            return numberCores;
+            return false;
         }
     }
 

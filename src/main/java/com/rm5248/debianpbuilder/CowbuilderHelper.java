@@ -1,10 +1,12 @@
 package com.rm5248.debianpbuilder;
 
 import hudson.FilePath;
+import hudson.FilePath.FileCallable;
 import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.model.AbstractBuild;
+import hudson.remoting.VirtualChannel;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,13 +23,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.Logger;
+import org.jenkinsci.remoting.RoleChecker;
 
 /**
  *
  * @author robert
  */
 class CowbuilderHelper {
+    private static final Logger LOGGER = Logger.getLogger( CowbuilderHelper.class.getName() );
     
     private Path m_cowbuilderBase;
     private String m_architecture;
@@ -44,7 +50,7 @@ class CowbuilderHelper {
     private File m_pbuilderrcAsFile;
     
     CowbuilderHelper( AbstractBuild build, Launcher launcher, PrintStream logger, 
-            String architecture, String distribution, String hookdir ) throws IOException, InterruptedException {
+            String architecture, String distribution, String hookdir, PbuilderConfiguration pbuilderConfig ) throws IOException, InterruptedException {
         m_logger = logger;
         m_architecture = architecture;
         m_distribution = distribution;
@@ -64,24 +70,29 @@ class CowbuilderHelper {
         m_buildLockfile = baseLockfile + ".building." + getPID();
         m_updateLockfile = baseLockfile + ".update";
         m_updateLockfilePid = baseLockfile + ".update." + getPID();
+                
+        LOGGER.fine( "Pbuilder config: " + pbuilderConfig.toConfigFileString() );
+        
+        logger.println( "Pbuilder configuration: " );
+        logger.println( pbuilderConfig.toConfigFileString() );
         
         m_pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
+        m_pbuilderrc.act( new PbuilderConfigWriter( pbuilderConfig.toConfigFileString() ) );
         m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
-        
-        try( Writer w = new OutputStreamWriter( new FileOutputStream( m_pbuilderrcAsFile ) ) ){
-            w.write( "USENETWORK=yes" );
-            w.write( System.lineSeparator() );
-        }
     }
     
-    public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException {         
+    public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException { 
+        //note: this will lock on the master, is that what we want? 
+        //unsure.....
         FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
                 return false;
             }
             
-            if( !Files.exists( m_cowbuilderBase ) ){
+            boolean baseExists = m_build.getWorkspace().act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
+            
+            if( !baseExists ){
                 return createCowbuilderBase();
             }else{
                 return updateCowbuilderBase();
@@ -89,11 +100,7 @@ class CowbuilderHelper {
         }
     }
     
-    private boolean createCowbuilderBase() throws IOException, InterruptedException {
-        FilePath pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
-        File pbuilderAsFile = new File( pbuilderrc.toURI() );
-        
-        Proc proc = null;
+    private boolean createCowbuilderBase() throws IOException, InterruptedException {        
         ProcStarter procStarter = m_launcher
             .launch()
                 .stdout( m_logger )
@@ -101,7 +108,6 @@ class CowbuilderHelper {
             .cmds( "sudo", 
                     "cowbuilder", 
                     "--create", 
-                    "--debug",
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--distribution",
@@ -117,10 +123,9 @@ class CowbuilderHelper {
                     "--debootstrapopts",
                     "--variant=buildd",
                     "--configfile",
-                    pbuilderAsFile.getAbsolutePath(),
+                    m_pbuilderrcAsFile.getAbsolutePath(),
                     "--hookdir",
                     m_hookdir );
-        proc = procStarter.start();
         int status = procStarter.join();
         
         if( status != 0 ){
@@ -132,20 +137,17 @@ class CowbuilderHelper {
     }
     
     private boolean updateCowbuilderBase() throws IOException, InterruptedException {
-        Proc proc = null;
         ProcStarter procStarter = m_launcher
             .launch()
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
             .cmds( "sudo", 
                     "cowbuilder", 
-                    "--update", 
-                    "--debug",
+                    "--update",
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--configfile",
                     m_pbuilderrcAsFile.getAbsolutePath() );
-        proc = procStarter.start();
         int status = procStarter.join();
         
         if( status != 0 ){
@@ -165,7 +167,6 @@ class CowbuilderHelper {
         
         newEnv.put( "DIST", m_distribution );
         newEnv.put( "ARCH", m_architecture );
-        newEnv.put( "PATH", "/bin:/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin" );
         
         return newEnv;
     }
@@ -183,10 +184,9 @@ class CowbuilderHelper {
             .launch()
             .cmds( "dpkg", "--print-architecture" )
             .readStdout();
+        Proc proc = procStarter.start();
         int status;
-        Proc proc = null;
-        proc = procStarter.start();
-        status = procStarter.join();
+        status = proc.join();
         
         if( status != 0 ){
             return;
@@ -239,9 +239,17 @@ class CowbuilderHelper {
     private boolean doBuild( String outputDir, String sourceFile, int numCores ) throws IOException, InterruptedException {  
         String debBuildOpts = "-sa";
         String bindMounts;
-        String jLevel = String.format( "-j%d", numCores );
+        String jLevel;
+              
+        if( numCores == -1 ){
+            jLevel = "-jauto";
+        }else if( numCores > 0 ){
+            jLevel = String.format( "-j%d", numCores );
+        }else{
+            m_logger.println( "Unable to use cores of " + numCores + ": must be either -1 or a positive integer" );
+            return false;
+        }
                
-        Proc proc = null;
         ProcStarter procStarter = m_launcher
             .launch()
                 .stdout( m_logger )
@@ -262,7 +270,6 @@ class CowbuilderHelper {
                     m_hookdir,
                     "--configfile",
                     m_pbuilderrcAsFile.getAbsolutePath() );
-        proc = procStarter.start();
         int status = procStarter.join();
         
         if( status != 0 ){
@@ -270,5 +277,53 @@ class CowbuilderHelper {
         }
         
         return true;
+    }
+    
+    private static final class PbuilderConfigWriter implements FileCallable<Void>{
+        
+        private static final long serialVersionUID = 1L;
+        
+        private String m_toWrite;
+        
+        public PbuilderConfigWriter( String toWrite ){
+            m_toWrite = toWrite;
+            LOGGER.finer( "Pbuilder config in config writer: " + m_toWrite );
+        }
+
+        @Override
+        public Void invoke( File file, VirtualChannel vc ) throws IOException, InterruptedException {
+            try( Writer w = new OutputStreamWriter( new FileOutputStream( file ) ) ){
+                w.write(  m_toWrite );
+            }
+            
+            return null;
+        }
+
+        @Override
+        public void checkRoles( RoleChecker rc ) throws SecurityException {
+            //throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
+        }
+        
+    }
+    
+    private static final class CheckIfAbsolutePathExists implements FileCallable<Boolean>{
+        
+        private final String m_path;
+        
+        public CheckIfAbsolutePathExists( String path ){
+            m_path = path;
+        }
+        
+        @Override
+        public Boolean invoke( File file, VirtualChannel vc ) throws IOException, InterruptedException {
+            File f = new File( m_path );
+            
+            return f.exists();
+        }
+
+        @Override
+        public void checkRoles( RoleChecker rc ) throws SecurityException {
+            //throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
+        }
     }
 }
