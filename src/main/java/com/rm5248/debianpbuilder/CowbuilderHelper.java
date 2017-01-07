@@ -230,8 +230,11 @@ class CowbuilderHelper {
         return Integer.parseInt( linked.toFile().getName() );
     }
     
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings( value="NP_LOAD_OF_KNOWN_NULL_VALUE",
+                    justification="Does not produce valid output(load of known null at end of try block)" )
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
+        boolean retValue;
         
         if( outputDirectory == null || sourceFile == null ){
             m_logger.println( "Output directory or source file null.  This is a programming problem, "
@@ -247,10 +250,13 @@ class CowbuilderHelper {
                 return false;
             }
             
-            return doBuild( io_outputFile.getAbsolutePath(), 
+            retValue = doBuild( io_outputFile.getAbsolutePath(), 
                     io_sourceFile.getAbsolutePath(),
                     numCores );
+            
         }
+        
+        return retValue;
     }
     
     private boolean doBuild( String outputDir, String sourceFile, int numCores ) throws IOException, InterruptedException {  
