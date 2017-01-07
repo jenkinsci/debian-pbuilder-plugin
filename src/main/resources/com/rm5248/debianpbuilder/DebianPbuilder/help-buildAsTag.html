@@ -3,10 +3,14 @@
     the deb version does not get incremented(i.e. it is exactly as set in the 
     debian/changelog file).
     
-    Alternatively, you can also set the environment variable 
-    DEB_PBUILDER_BUILDING_TAG to either true or false.
-    
     If using SVN, this plugin automatically looks at the SVN_URL_1 environment 
     variable to see if the string "tags/" exists.  If it does, the build will 
     act as though this parameter is set.
+    
+    If using Git, this plugin automatically looks at the GIT_BRANCH environment 
+    variable to see if the string "tags/" exists.  If it does, the build will 
+    act as though this parameter is set.
+    
+    Alternatively, you can also set the environment variable 
+    DEB_PBUILDER_BUILDING_TAG to either true or false.
 </p>

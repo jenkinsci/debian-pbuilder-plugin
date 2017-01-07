@@ -460,6 +460,12 @@ public class DebianPbuilder extends Builder {
             }
         }
         
+        if( envVars.containsKey( "GIT_BRANCH" ) ){
+            if( envVars.get( "GIT_BRANCH" ).indexOf( "tags/" ) >= 0 ){
+                return true;
+            }
+        }
+        
         if( envVars.containsKey( "DEB_PBUILDER_BUILDING_TAG" ) ){
             return Boolean.parseBoolean( envVars.get( "DEB_BUILDER_BUILDING_TAG" ) );
         }

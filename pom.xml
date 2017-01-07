@@ -54,4 +54,33 @@
     </plugins>
   </build>
 
+    <licenses>
+        <license>
+            <name>MIT</name>
+        </license>
+    </licenses>
+    
+    <scm>
+        <url>https://github.com/rm5248/debian-pbuilder</url>
+        <connection>scm:git:https://github.com/rm5248/debian-pbuilder.git</connection>
+        <developerConnection>scm:git:git@github.com:rm5248/debian-pbuilder.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    
+    <issueManagement>
+        <url></url>
+    </issueManagement>
+    
+    <developers>
+        <developer>
+            <email>robert.middleton@rm5248.com</email>
+            <id>rm5248</id>
+            <name>Robert Middleton</name>
+            <url>http://www.rm5248.com</url>
+            <roles>
+                <role>Main Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
 </project>

@@ -26,6 +26,7 @@ The one global configuration option is to set the e-mail address that will be se
 ## Environment Variables
 
 |Environment Variable|Usage|
+|--------------------|-----|
 |`DEB_PBUILDER_BUILDING_TAG`|Set this environment variable if you are building a tag.|
 
 ## System configuration
