@@ -90,13 +90,14 @@ public class DebianPbuilder extends Builder {
         FilePath dscFile = null;
         FilePath hookdir = null;
         PbuilderConfiguration pbuildConfig = new PbuilderConfiguration();
+        FilePath workspace = build.getWorkspace();
         
         if( !launcher.isUnix() ){
             listener.getLogger().println( "Can't build: not on Unix-like system" );
             return false;
         }
         
-        if( build.getWorkspace() == null ){
+        if( workspace == null ){
             listener.getLogger().println( "Can't build: workspace is  null" );
             return false;
         }
@@ -158,7 +159,7 @@ public class DebianPbuilder extends Builder {
             listener.getLogger().println( "Snapshot version: " + snapshotVersion );
 
 
-            updateChangelog(launcher, build.getWorkspace().child( "source" ).child( "debian" ).child( "changelog" ),
+            updateChangelog(launcher, workspace.child( "source" ).child( "debian" ).child( "changelog" ),
                     packageName, snapshotVersion);
         }else{
             //we are building a tagged version, don't update the changelog or version
@@ -169,9 +170,8 @@ public class DebianPbuilder extends Builder {
 
         generateChanges(build, launcher, listener, packageName, snapshotVersion);
         
-        binariesLocation = build.getWorkspace().createTempDir( "binaries", null );
-        //hookdir = build.getWorkspace().createTempFile( "hookdir", null );
-        hookdir = build.getWorkspace().child( "hookdir" );
+        binariesLocation = workspace.createTempDir( "binaries", null );
+        hookdir = workspace.child( "hookdir" );
         if( !hookdir.exists() ){
             hookdir.mkdirs();
         }
@@ -181,7 +181,7 @@ public class DebianPbuilder extends Builder {
             path.chmod( 0755 );
         }
         
-        for( FilePath path : build.getWorkspace().list() ){
+        for( FilePath path : workspace.list() ){
             if( path.getName().endsWith( ".dsc" ) ){
                 if( dscFile != null ){
                     listener.getLogger().println( "More than one dsc file found, aborting build" );
@@ -280,9 +280,13 @@ public class DebianPbuilder extends Builder {
      * @return 
      */
     private boolean isDebianPackage( AbstractBuild build, Launcher launcher, BuildListener listener ) throws IOException, InterruptedException{
+       FilePath workspace = build.getWorkspace();
+        if( workspace == null ){
+            return false;
+        }
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( build.getWorkspace().child( "source" ) )
+            .pwd( workspace.child( "source" ) )
             .cmdAsSingleString( "dpkg-parsechangelog --count 1" )
             .readStdout();
         int status = procStarter.join();
@@ -295,13 +299,16 @@ public class DebianPbuilder extends Builder {
     }
     
     private String getDpkgField( AbstractBuild build, Launcher launcher, BuildListener listener, String fieldName ) throws IOException, InterruptedException {
+        FilePath workspace = build.getWorkspace();
+        if( workspace == null ){
+            return null;
+        }
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( build.getWorkspace().child( "source" ) )
+            .pwd( workspace.child( "source" ) )
             .cmds( "dpkg-parsechangelog", "--show-field", fieldName )
             .readStdout();
-        Proc proc = null;
-        proc = procStarter.start();
+        Proc proc = procStarter.start();
         
         int status = proc.join();
         
@@ -320,7 +327,7 @@ public class DebianPbuilder extends Builder {
      * 
      */
     private void updateChangelog( Launcher launcher, FilePath changelog, String packageName, String snapshotVersion ) throws IOException, InterruptedException {
-        Scanner scan = new Scanner( changelog.read() );
+        Scanner scan = new Scanner( changelog.read(), "UTF-8" );
         StringBuilder strBuild = new StringBuilder();
         String debEmail = "Debian Pbuilder Autobuilder <" +
                 getEmail(launcher) + ">";
@@ -352,7 +359,7 @@ public class DebianPbuilder extends Builder {
         
         scan.close();
                 
-        Writer w = new OutputStreamWriter( changelog.write() );
+        Writer w = new OutputStreamWriter( changelog.write(), "UTF-8" );
         w.write( strBuild.toString() );
         w.close();
     }
@@ -367,7 +374,7 @@ public class DebianPbuilder extends Builder {
                 .readStdout();
             Proc proc = procStarter.start();
             proc.join();
-            Scanner scan = new Scanner( proc.getStdout() );
+            Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
             
             return "jenkins@" + scan.nextLine();
         }
@@ -407,12 +414,19 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
-        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-        Writer w = new OutputStreamWriter( build.getWorkspace().child( packageName + "_" + packageVersion ).write(), 
+        FilePath workspace = build.getWorkspace();
+        if( workspace == null ){
+            return false;
+        }
+        
+        try( Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+            Writer w = new OutputStreamWriter( workspace.child( packageName + "_" + packageVersion ).write(), 
                 "UTF-8" );
-        while( scan.hasNextLine() ){
-            w.write( scan.nextLine() );
-            w.write( System.lineSeparator() );
+                ){
+            while( scan.hasNextLine() ){
+                w.write( scan.nextLine() );
+                w.write( System.lineSeparator() );
+            }
         }
         
         return true;

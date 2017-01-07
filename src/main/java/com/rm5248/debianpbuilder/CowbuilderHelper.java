@@ -90,9 +90,7 @@ class CowbuilderHelper {
         //note: this will lock on the master, is that what we want? 
         //unsure.....
         FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
-        if( fc == null ) {
-            return false;
-        }
+        
         try( FileLock lock = fc.tryLock() ){
             FilePath workspace = m_build.getWorkspace();
             if( lock == null || workspace == null ){
@@ -234,9 +232,7 @@ class CowbuilderHelper {
     
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
-        if( fc == null ) {
-            return false;
-        }
+        
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
                 return false;

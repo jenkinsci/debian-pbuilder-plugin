@@ -1,58 +1,58 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
   
-  <properties>
-      <jenkins.version>2.0</jenkins.version>
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+    <properties>
+        <jenkins.version>2.0</jenkins.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
   
-  <parent>
-    <groupId>org.jenkins-ci.plugins</groupId>
-    <artifactId>plugin</artifactId>
-    <version>2.19</version><!-- which version of Jenkins is this plugin built against? -->
-  </parent>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>2.19</version><!-- which version of Jenkins is this plugin built against? -->
+    </parent>
 
-  <groupId>com.rm5248</groupId>
-  <artifactId>DebianPbuilder</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>hpi</packaging>
+    <groupId>com.rm5248</groupId>
+    <artifactId>DebianPbuilder</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>hpi</packaging>
 
-  <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </repository>
-  </repositories>
+    <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </pluginRepository>
-  </pluginRepositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
   
-  <dependencies>
-  </dependencies>
+    <dependencies>
+    </dependencies>
   
-  <!-- This plugin requires at least java 8, -->
-  <!-- but what we pull in from our parent POM only checks to java 7 -->
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <configuration>
-            <signature>
-                <groupId>org.codehaus.mojo.signature</groupId>
-                <artifactId>java18</artifactId>
-                <version>1.0</version>
-                </signature>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+    <!-- This plugin requires at least java 8, -->
+    <!-- but what we pull in from our parent POM only checks to java 7 -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <configuration>
+                    <signature>
+                        <groupId>org.codehaus.mojo.signature</groupId>
+                        <artifactId>java18</artifactId>
+                        <version>1.0</version>
+                    </signature>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <licenses>
         <license>
@@ -82,5 +82,19 @@
             </roles>
         </developer>
     </developers>
+    
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <configuration>
+                    <findbugsXmlOutput>true</findbugsXmlOutput>
+                    <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                    <xmlOutput>true</xmlOutput>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
 </project>
