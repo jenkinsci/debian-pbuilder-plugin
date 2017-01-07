@@ -76,7 +76,12 @@ class CowbuilderHelper {
         logger.println( "Pbuilder configuration: " );
         logger.println( pbuilderConfig.toConfigFileString() );
         
-        m_pbuilderrc = m_build.getWorkspace().createTempFile( "pbuilderrc", null );
+        FilePath workspace = m_build.getWorkspace();
+        if( workspace == null ){
+            return;
+        }
+        
+        m_pbuilderrc = workspace.createTempFile( "pbuilderrc", null );
         m_pbuilderrc.act( new PbuilderConfigWriter( pbuilderConfig.toConfigFileString() ) );
         m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
     }
@@ -85,12 +90,16 @@ class CowbuilderHelper {
         //note: this will lock on the master, is that what we want? 
         //unsure.....
         FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
+        if( fc == null ) {
+            return false;
+        }
         try( FileLock lock = fc.tryLock() ){
-            if( lock == null ){
+            FilePath workspace = m_build.getWorkspace();
+            if( lock == null || workspace == null ){
                 return false;
             }
             
-            boolean baseExists = m_build.getWorkspace().act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
+            boolean baseExists = workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
             
             if( !baseExists ){
                 return createCowbuilderBase();
@@ -192,7 +201,7 @@ class CowbuilderHelper {
             return;
         }
         
-        Scanner scan = new Scanner( proc.getStdout() );
+        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
         m_dpkgArch = scan.nextLine();
     }
     
@@ -225,6 +234,9 @@ class CowbuilderHelper {
     
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
+        if( fc == null ) {
+            return false;
+        }
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
                 return false;
@@ -292,7 +304,7 @@ class CowbuilderHelper {
 
         @Override
         public Void invoke( File file, VirtualChannel vc ) throws IOException, InterruptedException {
-            try( Writer w = new OutputStreamWriter( new FileOutputStream( file ) ) ){
+            try( Writer w = new OutputStreamWriter( new FileOutputStream( file ), "UTF-8" ) ){
                 w.write(  m_toWrite );
             }
             

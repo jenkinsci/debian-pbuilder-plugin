@@ -96,6 +96,11 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
+        if( build.getWorkspace() == null ){
+            listener.getLogger().println( "Can't build: workspace is  null" );
+            return false;
+        }
+        
         if( !ensureDpkgParseChangelogIsValid(build, launcher, listener) ){
             return false;
         }
@@ -245,7 +250,7 @@ public class DebianPbuilder extends Builder {
         Proc proc = procStarter.start();
         proc.join();
         
-        Scanner scan = new Scanner( proc.getStdout() );
+        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
         
         String line = scan.nextLine();
         
@@ -255,7 +260,7 @@ public class DebianPbuilder extends Builder {
         if( m.find() ){
             int major = Integer.parseInt( m.group( 1 ) );
             int minor = Integer.parseInt( m.group( 2 ) );
-            int patch = Integer.parseInt( m.group( 3 ) );
+            //int patch = Integer.parseInt( m.group( 3 ) );
             
             return ( major >= 1 && minor >= 17 );
         }
@@ -304,7 +309,7 @@ public class DebianPbuilder extends Builder {
             return null;
         }
         
-        Scanner scan = new Scanner( proc.getStdout() );
+        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
         
         return scan.nextLine();
     }
@@ -360,10 +365,8 @@ public class DebianPbuilder extends Builder {
                 .launch()
                 .cmds( "hostname" )
                 .readStdout();
-            int status;
-            Proc proc = null;
-            proc = procStarter.start();
-            status = proc.join();
+            Proc proc = procStarter.start();
+            proc.join();
             Scanner scan = new Scanner( proc.getStdout() );
             
             return "jenkins@" + scan.nextLine();
@@ -404,8 +407,9 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
-        Scanner scan = new Scanner( proc.getStdout() );
-        Writer w = new OutputStreamWriter( build.getWorkspace().child( packageName + "_" + packageVersion ).write() );
+        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+        Writer w = new OutputStreamWriter( build.getWorkspace().child( packageName + "_" + packageVersion ).write(), 
+                "UTF-8" );
         while( scan.hasNextLine() ){
             w.write( scan.nextLine() );
             w.write( System.lineSeparator() );
@@ -431,7 +435,7 @@ public class DebianPbuilder extends Builder {
             return null;
         }
         
-        Scanner scan = new Scanner( proc.getStdout() );
+        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
         while( scan.hasNextLine() ){
             toRet.append( scan.nextLine() );
         }
