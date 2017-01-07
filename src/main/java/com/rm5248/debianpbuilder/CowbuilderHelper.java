@@ -233,6 +233,12 @@ class CowbuilderHelper {
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
         
+        if( outputDirectory == null || sourceFile == null ){
+            m_logger.println( "Output directory or source file null.  This is a programming problem, "
+                    + "please file a bug report." );
+            return false;
+        }
+        
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
                 return false;
