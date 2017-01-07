@@ -11,9 +11,12 @@ class PbuilderConfiguration {
     private String m_debootstrap;
     private String m_mirrorSite;
     private String[] m_debootstrapOpts;
+    private boolean m_useEatMyData;
+    private String[] m_extraPackages;
     
     PbuilderConfiguration(){
         m_useNetwork = false;
+        m_useEatMyData = false;
     }
     
     void setNetwork( boolean network ){
@@ -30,6 +33,14 @@ class PbuilderConfiguration {
     
     void setDebootstrapOpts( String ... opts ){
         m_debootstrapOpts = opts;
+    }
+    
+    void setUseEatMyData( boolean eatMyData ){
+        m_useEatMyData = eatMyData;
+    }
+    
+    void setExtraPackages( String ... extra ){
+        m_extraPackages = extra;
     }
     
     String toConfigFileString(){
@@ -64,6 +75,24 @@ class PbuilderConfiguration {
                 sb.append( ' ' );
             }
             sb.append( ")\n" );
+        }
+        
+        if( m_useEatMyData ){
+            if( m_extraPackages == null ){
+                m_extraPackages = new String[ 1 ];
+                m_extraPackages[ 0 ] = "eatmydata";
+            }
+            sb.append( "EATMYDATA=yes\n" );
+            sb.append( "export LD_PRELOAD=libeatmydata.so\n" );
+        }
+        
+        if( m_extraPackages != null ){
+            sb.append( "EXTRAPACKAGES=" );
+            for( int x = 0; x < m_extraPackages.length; x++ ){
+                sb.append( m_extraPackages[ x ] );
+                sb.append( " " );
+            }
+            sb.append( "\n" );
         }
         
         return sb.toString();

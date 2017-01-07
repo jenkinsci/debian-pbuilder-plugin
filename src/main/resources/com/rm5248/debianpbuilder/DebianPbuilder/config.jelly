@@ -9,4 +9,8 @@
     <f:entry title="Mirror Site" field="mirrorSite">
         <f:textbox/>
     </f:entry>
+    
+    <f:entry title="Build as tag" field="buildAsTag">
+        <f:checkbox/>
+    </f:entry>
 </j:jelly>

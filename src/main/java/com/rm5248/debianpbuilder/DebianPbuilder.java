@@ -51,12 +51,14 @@ public class DebianPbuilder extends Builder {
     private final int numberCores;
     private final String distribution;
     private final String mirrorSite;
+    private final boolean buildAsTag;
 
     @DataBoundConstructor
-    public DebianPbuilder(int numberCores, String distribution, String mirrorSite) {
+    public DebianPbuilder(int numberCores, String distribution, String mirrorSite, boolean buildAsTag) {
         this.numberCores = numberCores;
         this.distribution = distribution;
         this.mirrorSite = mirrorSite;
+        this.buildAsTag = buildAsTag;
     }
 
     public int getNumberCores(){
@@ -69,6 +71,10 @@ public class DebianPbuilder extends Builder {
     
     public String getMirrorSite(){
         return mirrorSite;
+    }
+    
+    public boolean getBuildAsTag(){
+        return buildAsTag;
     }
 
     @Override
@@ -117,33 +123,42 @@ public class DebianPbuilder extends Builder {
             return false;
         }
         
-        if( distribution.equalsIgnoreCase( "unreleased" ) ){
-            //do not raise the version number if this is an unreleased version
-            snapshotVersion = version + "~";
-        }else{
-            snapshotVersion = version + "+0";
-        }
-        snapshotVersion += now.format( dtFormat );
-       
-
         if( envVars.containsKey( "architecture" ) ){
             architecture = envVars.get( "architecture" );
         }
-
-        if( envVars.containsKey( "GIT_COMMIT" ) ){
-            snapshotVersion += ".git" + envVars.get( "GIT_COMMIT" ).substring( 0, 7 );
-        }
-
-        if( envVars.containsKey( "SVN_REVISION" ) ){
-            snapshotVersion += ".svn" + envVars.get( "SVN_REVISION" );
-        }
-        snapshotVersion += "." + build.getNumber();
         
-        listener.getLogger().println( "Snapshot version: " + snapshotVersion );
+        boolean isTag = checkIfBuildingTag( envVars );
         
- 
-        updateChangelog(launcher, build.getWorkspace().child( "source" ).child( "debian" ).child( "changelog" ),
-                packageName, snapshotVersion);
+        if( !isTag ){
+            //we are not building a tag, update the version appropriately
+            
+            if( distribution.equalsIgnoreCase( "unreleased" ) ){
+                //do not raise the version number if this is an unreleased version
+                snapshotVersion = version + "~";
+            }else{
+                snapshotVersion = version + "+0";
+            }
+            snapshotVersion += now.format( dtFormat );
+
+
+            if( envVars.containsKey( "GIT_COMMIT" ) ){
+                snapshotVersion += ".git" + envVars.get( "GIT_COMMIT" ).substring( 0, 7 );
+            }
+
+            if( envVars.containsKey( "SVN_REVISION" ) ){
+                snapshotVersion += ".svn" + envVars.get( "SVN_REVISION" );
+            }
+            snapshotVersion += "." + build.getNumber();
+
+            listener.getLogger().println( "Snapshot version: " + snapshotVersion );
+
+
+            updateChangelog(launcher, build.getWorkspace().child( "source" ).child( "debian" ).child( "changelog" ),
+                    packageName, snapshotVersion);
+        }else{
+            //we are building a tagged version, don't update the changelog or version
+            snapshotVersion = version;
+        }
 
         tarSources(build, launcher, listener);
 
@@ -172,16 +187,15 @@ public class DebianPbuilder extends Builder {
         }
         
         if( distribution.equalsIgnoreCase( "UNRELEASED" ) ){
-            String userSetDistribution = this.distribution;
-            
-            if( userSetDistribution != null && userSetDistribution.length() > 0 ){
-                distribution = userSetDistribution;
-            }else{
-                distribution = getStdoutOfProcess(build, launcher, listener, "lsb_release", "--short", "--codename" );
-                if( distribution == null ){
-                    distribution = "sid";
-                }
+            distribution = getStdoutOfProcess(build, launcher, listener, "lsb_release", "--short", "--codename" );
+            if( distribution == null ){
+                distribution = "sid";
             }
+        }
+        
+        //user provided a distribution, override automatic settings
+        if( this.distribution != null && this.distribution.length() > 0 ){
+            distribution = this.distribution;
         }
         
         pbuildConfig.setNetwork( true );
@@ -223,19 +237,13 @@ public class DebianPbuilder extends Builder {
      * Ensure that dpkg-parsechangelog is installed and >= 1.17
      * @return 
      */
-    private boolean ensureDpkgParseChangelogIsValid(AbstractBuild build, Launcher launcher, BuildListener listener){
+    private boolean ensureDpkgParseChangelogIsValid(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .cmdAsSingleString( "dpkg-parsechangelog --version" )
             .readStdout();
-        Proc proc = null;
-        try{
-            proc = procStarter.start();
-            procStarter.join();
-        }catch( IOException | InterruptedException ex ){
-            listener.getLogger().println( ex );
-            return false;
-        }
+        Proc proc = procStarter.start();
+        proc.join();
         
         Scanner scan = new Scanner( proc.getStdout() );
         
@@ -266,20 +274,13 @@ public class DebianPbuilder extends Builder {
      * @param listener
      * @return 
      */
-    private boolean isDebianPackage( AbstractBuild build, Launcher launcher, BuildListener listener ){
+    private boolean isDebianPackage( AbstractBuild build, Launcher launcher, BuildListener listener ) throws IOException, InterruptedException{
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( build.getWorkspace().child( "source" ) )
             .cmdAsSingleString( "dpkg-parsechangelog --count 1" )
             .readStdout();
-        int status;
-        try{
-            procStarter.start();
-            status = procStarter.join();
-        }catch( IOException | InterruptedException ex ){
-            listener.getLogger().print( ex );
-            return false;
-        }
+        int status = procStarter.join();
         
         if( status != 0 ){
             return false;
@@ -288,21 +289,16 @@ public class DebianPbuilder extends Builder {
         return true;
     }
     
-    private String getDpkgField( AbstractBuild build, Launcher launcher, BuildListener listener, String fieldName ){
+    private String getDpkgField( AbstractBuild build, Launcher launcher, BuildListener listener, String fieldName ) throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( build.getWorkspace().child( "source" ) )
             .cmds( "dpkg-parsechangelog", "--show-field", fieldName )
             .readStdout();
-        int status;
         Proc proc = null;
-        try{
-            proc = procStarter.start();
-            status = procStarter.join();
-        }catch( IOException | InterruptedException ex ){
-            listener.getLogger().print( ex );
-            return null;
-        }
+        proc = procStarter.start();
+        
+        int status = proc.join();
         
         if( status != 0 ){
             return null;
@@ -367,7 +363,7 @@ public class DebianPbuilder extends Builder {
             int status;
             Proc proc = null;
             proc = procStarter.start();
-            status = procStarter.join();
+            status = proc.join();
             Scanner scan = new Scanner( proc.getStdout() );
             
             return "jenkins@" + scan.nextLine();
@@ -382,10 +378,7 @@ public class DebianPbuilder extends Builder {
             .launch()
             .pwd( build.getWorkspace() )
             .cmds( "dpkg-source", "-b", "source" );
-        int status;
-        Proc proc = null;
-        proc = procStarter.start();
-        status = procStarter.join();
+        int status = procStarter.join();
         
         if( status != 0 ){
             return false;
@@ -404,14 +397,8 @@ public class DebianPbuilder extends Builder {
             .cmds( "dpkg-genchanges", "-u.", "source" )
             .readStdout();
         int status;
-        Proc proc = null;
-        try{
-            proc = procStarter.start();
-            status = procStarter.join();
-        }catch( IOException | InterruptedException ex ){
-            listener.getLogger().print( ex );
-            return false;
-        }
+        Proc proc  = procStarter.start();
+        status = proc.join();
         
         if( status != 0 ){
             return false;
@@ -438,7 +425,7 @@ public class DebianPbuilder extends Builder {
         int status;
         Proc proc = null;
         proc = procStarter.start();
-        status = procStarter.join();
+        status = proc.join();
         
         if( status != 0 ){
             return null;
@@ -460,6 +447,24 @@ public class DebianPbuilder extends Builder {
         }else{
             return false;
         }
+    }
+    
+    private boolean checkIfBuildingTag( EnvVars envVars ){
+        if( buildAsTag ){
+            return true;
+        }
+        
+        if( envVars.containsKey( "SVN_URL_1" ) ){
+            if( envVars.get( "SVN_URL_1" ).indexOf( "tags/" ) >= 0 ){
+                return true;
+            }
+        }
+        
+        if( envVars.containsKey( "DEB_PBUILDER_BUILDING_TAG" ) ){
+            return Boolean.parseBoolean( envVars.get( "DEB_BUILDER_BUILDING_TAG" ) );
+        }
+        
+        return false;
     }
 
     // Overridden for better type safety.

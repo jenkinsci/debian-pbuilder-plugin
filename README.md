@@ -23,6 +23,11 @@ As of right now, this is not hosted on jenkins-ci.org because it is still in its
 
 The one global configuration option is to set the e-mail address that will be set in the changelog when the plugin updates the changelog.
 
+## Environment Variables
+
+|Environment Variable|Usage|
+|`DEB_PBUILDER_BUILDING_TAG`|Set this environment variable if you are building a tag.|
+
 ## System configuration
 
 On any system that is running the build, serveral support programs must be installed and configured properly.  
@@ -42,7 +47,7 @@ The output of all commands(pbuilder, etc) can be found in the console of the bui
 
 Once the project has been built, the output files will be automatically added as artifacts.
 
-The format of the files is the same as a normal deb file.  `package-name_version~<date>.[svn|git]<rev>.<build_number>`.  The reason for using the `~` in the name is that that denotes a pre-release version of software.  
+The format of the files is the same as a normal deb file.  `package-name_version~<date>.[svn|git]<rev>.<build_number>`.  The reason for using the `~` in the name is that that denotes a pre-release version of software.  If the distribution that has been set is not `unreleased`, then the version will have `+0` in place of `~`.
 
 ## Troubleshooting
 
