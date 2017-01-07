@@ -239,13 +239,16 @@ class CowbuilderHelper {
             return false;
         }
         
+        File io_outputFile = new File( outputDirectory.toURI() );
+        File io_sourceFile = new File( sourceFile.toURI() );
+        
         try( FileLock lock = fc.tryLock() ){
             if( lock == null ){
                 return false;
             }
             
-            return doBuild( new File( outputDirectory.toURI() ).getAbsolutePath(), 
-                    new File( sourceFile.toURI() ).getAbsolutePath(),
+            return doBuild( io_outputFile.getAbsolutePath(), 
+                    io_sourceFile.getAbsolutePath(),
                     numCores );
         }
     }
