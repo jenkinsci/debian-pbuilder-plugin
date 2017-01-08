@@ -15,7 +15,7 @@
 
     <groupId>com.rm5248</groupId>
     <artifactId>DebianPbuilder</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>hpi</packaging>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -64,11 +64,11 @@
         <url>https://github.com/rm5248/debian-pbuilder</url>
         <connection>scm:git:https://github.com/rm5248/debian-pbuilder.git</connection>
         <developerConnection>scm:git:git@github.com:rm5248/debian-pbuilder.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>DebianPbuilder-1.0</tag>
     </scm>
     
     <issueManagement>
-        <url></url>
+        <url />
     </issueManagement>
     
     <developers>
