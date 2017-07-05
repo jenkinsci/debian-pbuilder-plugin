@@ -50,9 +50,9 @@ Once the project has been built, the output files will be automatically added as
 
 The format of the files is the same as a normal deb file.  `package-name_version~<date>.[svn|git]<rev>.<build_number>`.  The reason for using the `~` in the name is that that denotes a pre-release version of software.  If the distribution that has been set is not `unreleased`, then the version will have `+0` in place of `~`.
 
-## Troubleshooting
+## Other Notes
 
-Often, creating the pbuilder directory will fail for some unknown reason.  If that happens, create it manually by going to the 'console output' of the build number and copying the cowbuilder call into a shell and run that.
+This plugin assumes that your project is in a `3.0 (native)` format, otherwise dpkg-source will fail.
 
 ## License
 
