@@ -166,7 +166,9 @@ public class DebianPbuilder extends Builder {
             snapshotVersion = version;
         }
 
-        tarSources(build, launcher, listener);
+        if( !tarSources(build, launcher, listener) ){
+            return false;
+        }
 
         generateChanges(build, launcher, listener, packageName, snapshotVersion);
         
@@ -387,7 +389,9 @@ public class DebianPbuilder extends Builder {
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( build.getWorkspace() )
-            .cmds( "dpkg-source", "-b", "source" );
+            .cmds( "dpkg-source", "-b", "source" )
+            .readStderr()
+            .readStdout();
         int status = procStarter.join();
         
         if( status != 0 ){
