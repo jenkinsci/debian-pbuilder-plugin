@@ -13,6 +13,7 @@ class PbuilderConfiguration {
     private String[] m_debootstrapOpts;
     private boolean m_useEatMyData;
     private String[] m_extraPackages;
+    private String[] m_additionalBuild;
     
     PbuilderConfiguration(){
         m_useNetwork = false;
@@ -41,6 +42,10 @@ class PbuilderConfiguration {
     
     void setExtraPackages( String ... extra ){
         m_extraPackages = extra;
+    }
+    
+    void setAdditionalBuildResults( String ... buildResults ){
+        m_additionalBuild = buildResults;
     }
     
     String toConfigFileString(){
@@ -93,6 +98,17 @@ class PbuilderConfiguration {
                 sb.append( " " );
             }
             sb.append( "\n" );
+        }
+        
+        if( m_additionalBuild != null ){
+            sb.append( "ADDITIONAL_BUILDRESULTS=(" );
+            for( int x = 0; x < m_additionalBuild.length; x++ ){
+                sb.append( "\"" );
+                sb.append( m_additionalBuild[ x ] );
+                sb.append( "\"" );
+                sb.append( " " );
+            }
+            sb.append( ")\n" );
         }
         
         return sb.toString();

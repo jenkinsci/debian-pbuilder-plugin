@@ -45,20 +45,24 @@ import java.util.regex.Pattern;
  * master Jenkins instance.
  */
 public class DebianPbuilder extends Builder {
-    
-    private static final Logger LOGGER = Logger.getLogger( DebianPbuilder.class.getName() );
 
     private final int numberCores;
     private final String distribution;
     private final String mirrorSite;
     private final boolean buildAsTag;
+    private final String additionalBuildResults;
 
     @DataBoundConstructor
-    public DebianPbuilder(int numberCores, String distribution, String mirrorSite, boolean buildAsTag) {
+    public DebianPbuilder(int numberCores, 
+            String distribution, 
+            String mirrorSite, 
+            boolean buildAsTag,
+            String additionalBuildResults) {
         this.numberCores = numberCores;
         this.distribution = distribution;
         this.mirrorSite = mirrorSite;
         this.buildAsTag = buildAsTag;
+        this.additionalBuildResults = additionalBuildResults;
     }
 
     public int getNumberCores(){
@@ -75,6 +79,10 @@ public class DebianPbuilder extends Builder {
     
     public boolean getBuildAsTag(){
         return buildAsTag;
+    }
+    
+    public String getAdditionalBuildResults(){
+        return additionalBuildResults;
     }
 
     @Override
@@ -206,6 +214,7 @@ public class DebianPbuilder extends Builder {
         }
         
         pbuildConfig.setNetwork( true );
+        pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         
         if( isUbuntu( build, launcher, listener ) ){
             pbuildConfig.setDebootstrapOpts( "--keyring", "/usr/share/keyrings/debian-archive-keyring.gpg" );
