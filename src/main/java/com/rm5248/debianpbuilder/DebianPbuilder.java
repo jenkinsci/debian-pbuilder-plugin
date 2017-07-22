@@ -399,8 +399,8 @@ public class DebianPbuilder extends Builder {
             .launch()
             .pwd( build.getWorkspace() )
             .cmds( "dpkg-source", "-b", "source" )
-            .readStderr()
-            .readStdout();
+            .stderr( listener.getLogger() )
+            .stdout( listener.getLogger() );
         int status = procStarter.join();
         
         if( status != 0 ){
@@ -418,7 +418,8 @@ public class DebianPbuilder extends Builder {
             .launch()
             .pwd( build.getWorkspace() )
             .cmds( "dpkg-genchanges", "-u.", "source" )
-            .readStdout();
+            .stderr( listener.getLogger() )
+            .stdout( listener.getLogger() );
         int status;
         Proc proc  = procStarter.start();
         status = proc.join();
