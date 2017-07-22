@@ -33,14 +33,15 @@ The one global configuration option is to set the e-mail address that will be se
 
 On any system that is running the build, serveral support programs must be installed and configured properly.  
 
-1. Install needed denpendencies: `apt-get install qemu-user-static devscripts cowbuilder`
+1. Install needed denpendencies: `apt-get install qemu-user-static devscripts cowbuilder dpkg-dev`
 1. If building Debian packages on Ubuntu, make sure that the package `debian-archive-keyring` is installed
-2. Like jenkins-debian-glue, make sure that sudo is configured properly.  As taken from the jenkins-debian-glue webpage, do the following:
+2. Like jenkins-debian-glue, make sure that sudo is configured properly.  As taken from the jenkins-debian-glue webpage, add the following to either /etc/sudoers, or create a new file(e.g. /etc/sudoers.d/jenkins):
 
   ```
   jenkins ALL=NOPASSWD: /usr/sbin/cowbuilder, /usr/sbin/chroot
   Defaults env_keep+="DEB_* DIST ARCH"
   ```
+(this assumes that Jenkins is running under the Jenkins user)
 
 ## Output
 
