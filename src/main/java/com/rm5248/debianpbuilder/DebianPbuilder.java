@@ -214,7 +214,9 @@ public class DebianPbuilder extends Builder {
         }
         
         pbuildConfig.setNetwork( true );
-        pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
+        if( additionalBuildResults != null && additionalBuildResults.length() > 0 ){
+            pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
+        }
         
         if( isUbuntu( build, launcher, listener ) ){
             pbuildConfig.setDebootstrapOpts( "--keyring", "/usr/share/keyrings/debian-archive-keyring.gpg" );

@@ -100,7 +100,7 @@ class PbuilderConfiguration {
             sb.append( "\n" );
         }
         
-        if( m_additionalBuild != null ){
+        if( m_additionalBuild != null && m_additionalBuild.length > 0 ){
             sb.append( "ADDITIONAL_BUILDRESULTS=(" );
             for( int x = 0; x < m_additionalBuild.length; x++ ){
                 sb.append( "\"" );
