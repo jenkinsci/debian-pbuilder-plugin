@@ -40,7 +40,6 @@ class CowbuilderHelper {
     private String m_distribution;
     private Launcher m_launcher;
     private String m_dpkgArch;
-    private AbstractBuild m_build;
     private String m_hookdir;
     private String m_buildLockfile;
     private String m_updateLockfile;
@@ -48,15 +47,16 @@ class CowbuilderHelper {
     private PrintStream m_logger;
     private FilePath m_pbuilderrc;
     private File m_pbuilderrcAsFile;
+    private FilePath m_workspace;
     
-    CowbuilderHelper( AbstractBuild build, Launcher launcher, PrintStream logger, 
+    CowbuilderHelper( FilePath workspace, Launcher launcher, PrintStream logger, 
             String architecture, String distribution, String hookdir, PbuilderConfiguration pbuilderConfig ) throws IOException, InterruptedException {
         m_logger = logger;
         m_architecture = architecture;
         m_distribution = distribution;
         m_launcher = launcher;
-        m_build = build;
         m_hookdir = hookdir;
+        m_workspace = workspace;
         
         setDpkgArchitecture();
         
@@ -76,7 +76,6 @@ class CowbuilderHelper {
         logger.println( "Pbuilder configuration: " );
         logger.println( pbuilderConfig.toConfigFileString() );
         
-        FilePath workspace = m_build.getWorkspace();
         if( workspace == null ){
             return;
         }
@@ -92,12 +91,11 @@ class CowbuilderHelper {
         FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
         
         try( FileLock lock = fc.tryLock() ){
-            FilePath workspace = m_build.getWorkspace();
-            if( lock == null || workspace == null ){
+            if( lock == null || m_workspace == null ){
                 return false;
             }
             
-            boolean baseExists = workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
+            boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
             
             if( !baseExists ){
                 return createCowbuilderBase();

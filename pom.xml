@@ -10,7 +10,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.19</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>2.29</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
     <groupId>com.rm5248</groupId>
@@ -34,6 +34,17 @@
     </pluginRepositories>
   
     <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>structs</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>2.14</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
   
     <!-- This plugin requires at least java 8, -->

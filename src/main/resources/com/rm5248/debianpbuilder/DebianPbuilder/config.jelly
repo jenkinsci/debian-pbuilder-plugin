@@ -17,5 +17,8 @@
         <f:entry title="Additional Build Results" field="additionalBuildResults">
             <f:textbox/>
         </f:entry>
+        <f:entry title="Architecture" field="architecture">
+            <f:textbox/>
+        </f:entry>
     </f:advanced>
 </j:jelly>
