@@ -9,7 +9,7 @@ This plugin is based largely off of [jenkins-debian-glue.](https://jenkins-debia
 
 As of right now, this is not hosted on jenkins-ci.org because it is still in its early stages.  If there is some interest in either using this plugin and/or another maintainer to help with it, I am willing to move it to jenkins-ci.org and have it be installed automatically.
 
-## Jenkins Configuration
+## Jenkins Configuration(Traditional project)
 
 1. Create a new project.
 1. Set the SVN/git repo to use.  Like jenkins-debian-glue, if you are using SVN, set the "Local module directory(optional)" to "source"; if you are using git set "Additional behaviors/Local subdirectory for repo" to "source".
@@ -18,6 +18,24 @@ As of right now, this is not hosted on jenkins-ci.org because it is still in its
 3. If you want to use multiple cores/jobs, set the one configuration variable in this section
 4. If you have custom pbuilder hook files that you want to install, install the [Config File Provider Plugin](https://wiki.jenkins-ci.org/display/JENKINS/Config+File+Provider+Plugin) to add in config files.  Set the 'target' option to be `hookdir/<file-name>`
 5. If you set the project up as a multi-configuration project, you can set a user-defined axis as "architecture", with the specific architectures that you want to build for(this is the same as jenkins-debian-glue).
+
+## Jenkins Configuration(Pipeline)
+
+1. Create a new Pipeline project
+2. Add a node like the following:
+```
+node(){
+        ws{
+            stage( "clean" ){
+                cleanWs()
+            }
+            stage("build"){
+                //Add whatever parameters you need to the class
+                debianPbuilder()
+            }
+        }
+}
+```
 
 ### Global Configuration
 

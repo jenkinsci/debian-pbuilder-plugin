@@ -61,8 +61,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String additionalBuildResults;
     private String architecture;
     
-    //@DataBoundConstructor
-    private DebianPbuilder(){
+    @DataBoundConstructor
+    public DebianPbuilder(){
         numberCores = 1;
     }
 
@@ -71,12 +71,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             String distribution, 
             String mirrorSite, 
             boolean buildAsTag,
-            String additionalBuildResults) {
+            String additionalBuildResults,
+            String architecture) {
         this.numberCores = numberCores;
         this.distribution = distribution;
         this.mirrorSite = mirrorSite;
         this.buildAsTag = buildAsTag;
         this.additionalBuildResults = additionalBuildResults;
+        this.architecture = architecture;
     }
     
     @DataBoundSetter
