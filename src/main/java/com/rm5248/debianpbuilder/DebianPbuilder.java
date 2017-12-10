@@ -203,6 +203,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         architecture = getActualArchitecture( build, listener );
+        if( architecture == null ){
+            listener.getLogger().println( "Invalid architecture: (null)");
+            return false;
+        }else if( architecture.length() == 0 ){
+            listener.getLogger().println( "Invalid architecture: (0-length string)");
+            return false;
+        }
         
         boolean isTag = checkIfBuildingTag( envVars );
         
