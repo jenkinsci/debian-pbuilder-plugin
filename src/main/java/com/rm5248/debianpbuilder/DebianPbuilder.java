@@ -326,13 +326,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             throws InterruptedException, IOException {
         if( build instanceof AbstractBuild ){
             EnvVars env = build.getEnvironment( listener );
-            env.overrideAll( ((AbstractBuild)build).getBuildVariables() );
             
             if( !env.containsKey( "architecture" ) ){
-                return null;
+                listener.getLogger().println( "No architecture variable in environment"
+                        + " found, using parameter instead." );
+                return architecture;
             }
             
-            return env.expand( architecture );
+            return env.get( "architecture" );
         }else{
             return architecture;
         }
