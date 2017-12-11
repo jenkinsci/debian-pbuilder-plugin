@@ -4,5 +4,8 @@
         <f:entry title="Autobuild email address" field="jenkinsEmail">
             <f:textbox/>
         </f:entry>
+        <f:entry title="Package Version format" field="packageVersionFormat">
+            <f:textbox default="${descriptor.defaultPackageVersionFormat()}"/>
+        </f:entry>
     </f:section>
 </j:jelly>

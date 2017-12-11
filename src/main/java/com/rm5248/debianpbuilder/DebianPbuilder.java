@@ -156,8 +156,6 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             throws InterruptedException, IOException {
         String architecture = null;
         String snapshotVersion;
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        DateTimeFormatter dtFormat = DateTimeFormatter.ofPattern( "YYYYMMddHHmmss");
         CowbuilderHelper cowHelp;
         FilePath binariesLocation;
         FilePath dscFile = null;
@@ -203,12 +201,9 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         architecture = getActualArchitecture( build, listener );
-        if( architecture == null ){
-            listener.getLogger().println( "Invalid architecture: (null)");
-            return false;
-        }else if( architecture.length() == 0 ){
-            listener.getLogger().println( "Invalid architecture: (0-length string)");
-            return false;
+        if( architecture != null && architecture.length() == 0 ){
+            listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
+            architecture = null;
         }
         
         boolean isTag = checkIfBuildingTag( envVars );
@@ -222,17 +217,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             }else{
                 snapshotVersion = version + "+0";
             }
-            snapshotVersion += now.format( dtFormat );
-
-
-            if( envVars.containsKey( "GIT_COMMIT" ) ){
-                snapshotVersion += ".git" + envVars.get( "GIT_COMMIT" ).substring( 0, 7 );
-            }
-
-            if( envVars.containsKey( "SVN_REVISION" ) ){
-                snapshotVersion += ".svn" + envVars.get( "SVN_REVISION" );
-            }
-            snapshotVersion += "." + build.getNumber();
+            snapshotVersion += PackageVersionFormatter.formatPackageVersion( 
+                    getDescriptor().getPackageVersionFormat(), envVars, build.getNumber() );
 
             listener.getLogger().println( "Snapshot version: " + snapshotVersion );
 
@@ -328,9 +314,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             EnvVars env = build.getEnvironment( listener );
             
             if( !env.containsKey( "architecture" ) ){
-                listener.getLogger().println( "No architecture variable in environment"
-                        + " found, using parameter instead." );
-                return architecture;
+                if( architecture != null && architecture.length() > 0 ){
+                    listener.getLogger().println( "No architecture variable in environment"
+                            + " found, using parameter instead." );
+                    return architecture;
+                }else{
+                    listener.getLogger().println( "No architecture found, using " +
+                            "dpkg default" );
+                    return null;
+                }
             }
             
             return env.get( "architecture" );
@@ -561,7 +553,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private boolean isUbuntu( FilePath workspace, Launcher launcher, TaskListener listener ) throws IOException, InterruptedException {
         String output = getStdoutOfProcess( workspace, launcher, listener, "lsb_release", "--id" );
         
-        if( output.indexOf( "Ubuntu" ) > 0 ){
+        if( output.indexOf( "Ubuntu" ) >= 0 ){
             return true;
         }else{
             return false;
@@ -624,6 +616,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         
         private String jenkinsEmail;
+        private String packageVersionFormat;
 
         /**
          * Performs on-the-fly validation of the form field 'name'.
@@ -672,12 +665,25 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             jenkinsEmail = formData.getString( "jenkinsEmail" );
+            packageVersionFormat = formData.getString( "packageVersionFormat" );
             save();
             return super.configure(req,formData);
         }
         
         public String getJenkinsEmail(){
             return jenkinsEmail;
+        }
+        
+        public String getPackageVersionFormat(){
+            if( packageVersionFormat == null || packageVersionFormat.length() == 0 ){
+                return defaultPackageVersionFormat();
+            }
+            
+            return packageVersionFormat;
+        }
+        
+        public String defaultPackageVersionFormat(){
+            return "YYYYMMddHHmmss.%rev%.%build%";
         }
     }
 }

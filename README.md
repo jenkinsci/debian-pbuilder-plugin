@@ -2,14 +2,22 @@
 
 This plugin allows you to build deb packages in a pbuilder environment.
 
-This plugin is based largely off of [jenkins-debian-glue.](https://jenkins-debian-glue.org/)
+This plugin is based largely off of [jenkins-debian-glue.](
+https://jenkins-debian-glue.org/)
 
-Find pre-built versions of this plugin [on this Jenkins instance!](http://jenkins.rm5248.com/job/debian-pbuilder/)
+Find pre-built versions of this plugin [on this Jenkins instance!](
+http://jenkins.rm5248.com/job/debian-pbuilder/)
 
+[![Build Status](
+http://jenkins.rm5248.com/buildStatus/icon?job=debian-pbuilder)](
+http://jenkins.rm5248.com/job/debian-pbuilder/)
 
 ## Installation
 
-As of right now, this is not hosted on jenkins-ci.org because it is still in its early stages.  If there is some interest in either using this plugin and/or another maintainer to help with it, I am willing to move it to jenkins-ci.org and have it be installed automatically.
+As of right now, this is not hosted on jenkins-ci.org because it is still in 
+its early stages.  If there is some interest in either using this plugin 
+and/or another maintainer to help with it, I am willing to move it to 
+jenkins-ci.org and have it be installed automatically.
 
 ## Jenkins Configuration(Traditional project)
 
@@ -41,7 +49,10 @@ node(){
 
 ### Global Configuration
 
-The one global configuration option is to set the e-mail address that will be set in the changelog when the plugin updates the changelog.
+* Email address that jenkins will put in the debian/changelog file.  This 
+does not have to be a real email address at all
+* Package version format.  This controls what the package version looks like. 
+You can set various settings(datetime, git/svn revision, build #).
 
 ## Environment Variables
 
@@ -65,15 +76,24 @@ On any system that is running the build, serveral support programs must be insta
 
 ## Output
 
-The output of all commands(pbuilder, etc) can be found in the console of the build.
+The output of all commands(pbuilder, etc) can be found in the console of the 
+build.
 
-Once the project has been built, the output files will be automatically added as artifacts.
+Once the project has been built, the output files will be automatically added 
+as artifacts.
 
-The format of the files is the same as a normal deb file.  `package-name_version~<date>.[svn|git]<rev>.<build_number>`.  The reason for using the `~` in the name is that that denotes a pre-release version of software.  If the distribution that has been set is not `unreleased`, then the version will have `+0` in place of `~`.
+The format of the files is the same as a normal deb file.  
+`package-name_version~<date>.[svn|git]<rev>.<build_number>` by default.  
+The reason for using the `~` in the name is that that denotes a pre-release 
+version of software.  If the distribution that has been set is not 
+`unreleased`, then the version will have `+0` in place of `~`.  NoTe that the 
+version of the generated deb files can be configured in the global options 
+for the plugin.
 
 ## Other Notes
 
-This plugin assumes that your project is in a `3.0 (native)` format, otherwise dpkg-source will fail.
+This plugin assumes that your project is in a `3.0 (native)` format, otherwise 
+dpkg-source will fail.
 
 ## License
 

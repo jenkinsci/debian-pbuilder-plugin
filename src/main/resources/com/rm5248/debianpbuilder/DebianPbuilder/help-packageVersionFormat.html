@@ -1,0 +1,19 @@
+<p>
+    The format of the package name.  This determines what the version of the 
+    package will be when building a non-tag release. <br/>
+    <br/>
+    Acceptable format specifiers: <br/>
+    <ul>
+        <li><b>YYYY</b> - 4 digit year</li>
+        <li><b>MM</b> - 2 digit month</li>
+        <li><b>dd</b> - 2 digit day</li>
+        <li><b>HH</b> - 2 digit hour</li>
+        <li><b>mm</b> - 2 digit minute</li>
+        <li><b>ss</b> - 2 digit seconds</li>
+        <li><b>%rev%</b> - Revision.  For git, this is a string like 
+            "git1234567"(contains last commit).  
+            For SVN, this is a string like "svn1234"(contains current rev)</li>
+        <li><b>%build%</b> - Build number, as reported by Jenkins</li>
+    </ul>
+    The default value is YYYYMMddHHmmss.%rev%.%build%
+</p>
