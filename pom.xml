@@ -17,6 +17,7 @@
     <artifactId>debian-pbuilder</artifactId>
     <version>1.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
+    <url>https://wiki.jenkins.io/display/JENKINS/Debian+Pbuilder+Plugin</url>
 
     <name>Debian Pbuilder</name>
     <description>Build Debian packages in a pbuilder environment</description>
@@ -75,9 +76,9 @@
     </licenses>
     
     <scm>
-        <url>https://github.com/rm5248/debian-pbuilder</url>
-        <connection>scm:git:https://github.com/rm5248/debian-pbuilder.git</connection>
-        <developerConnection>scm:git:git@github.com:rm5248/debian-pbuilder.git</developerConnection>
+        <url>https://github.com/jenkinsci/debian-pbuilder-plugin</url>
+        <connection>scm:git:https://github.com/jenkinsci/debian-pbuilder-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/debian-pbuilder-plugin.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
     
