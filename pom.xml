@@ -111,16 +111,5 @@
             </plugin>
         </plugins>
     </reporting>
-    
-    <distributionManagement>
-        <repository>
-            <id>tmp.repo</id>
-            <url>file:///tmp</url>
-        </repository>
-        <site>
-            <id>tmp.site</id>
-            <url>file:///tmp/${project.groupId}-${project.version}</url>
-        </site>
-    </distributionManagement>
 
 </project>
