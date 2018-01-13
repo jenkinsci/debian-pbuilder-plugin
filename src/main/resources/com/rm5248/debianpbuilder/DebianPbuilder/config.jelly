@@ -20,5 +20,8 @@
         <f:entry title="Architecture" field="architecture">
             <f:textbox/>
         </f:entry>
+        <f:entry title="Location of debian/ folder" field="debianDirLocation">
+            <f:textbox default="${descriptor.defaultDebDirLocation()}"/>
+        </f:entry>
     </f:advanced>
 </j:jelly>

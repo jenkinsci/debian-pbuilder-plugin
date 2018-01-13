@@ -60,6 +60,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private boolean buildAsTag;
     private String additionalBuildResults;
     private String architecture;
+    private String debianDirLocation;
     
     @DataBoundConstructor
     public DebianPbuilder(){
@@ -110,6 +111,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public void setArchitecture( String architecture ){
         this.architecture = architecture;
     }
+    
+    @DataBoundSetter
+    public void setDebianDirLocation( String debianDirLocation ){
+        this.debianDirLocation = debianDirLocation;
+    }
 
     public int getNumberCores(){
         return numberCores;
@@ -133,6 +139,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     
     public String getArchitecture(){
         return architecture;
+    }
+    
+    public String getDebianDirLocation(){
+        if( this.debianDirLocation == null || 
+           this.debianDirLocation.length() == 0 ){
+            return getDescriptor().getDefaultDebianDirLocation();
+        }
+        
+        return debianDirLocation;
     }
     
     @Override
@@ -223,7 +238,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             listener.getLogger().println( "Snapshot version: " + snapshotVersion );
 
 
-            updateChangelog(launcher, workspace.child( "source" ).child( "debian" ).child( "changelog" ),
+            updateChangelog(launcher, workspace.child( getDebianDirLocation() ).child( "debian" ).child( "changelog" ),
                     packageName, snapshotVersion);
         }else{
             //we are building a tagged version, don't update the changelog or version
@@ -378,7 +393,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( workspace.child( "source" ) )
+            .pwd( workspace.child( getDebianDirLocation() ) )
             .cmdAsSingleString( "dpkg-parsechangelog --count 1" )
             .readStdout();
         int status = procStarter.join();
@@ -396,7 +411,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( workspace.child( "source" ) )
+            .pwd( workspace.child( getDebianDirLocation() ) )
             .cmds( "dpkg-parsechangelog", "--show-field", fieldName )
             .readStdout();
         Proc proc = procStarter.start();
@@ -478,7 +493,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( workspace )
-            .cmds( "dpkg-source", "-b", "source" )
+            .cmds( "dpkg-source", "-b", getDebianDirLocation() )
             .stderr( listener.getLogger() )
             .stdout( listener.getLogger() );
         int status = procStarter.join();
@@ -497,7 +512,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( workspace )
-            .cmds( "dpkg-genchanges", "-u.", "source" )
+            .cmds( "dpkg-genchanges", "-u.", getDebianDirLocation() )
             .stderr( listener.getLogger() )
             .stdout( listener.getLogger() );
         int status;
@@ -606,10 +621,6 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     /**
      * Descriptor for {@link DebianPbuilder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
-     *
-     * <p>
-     * See <tt>src/main/resources/hudson/plugins/hello_world/HelloWorldBuilder/*.jelly</tt>
-     * for the actual HTML fragment for the configuration screen.
      */
     @Symbol( "debianPbuilder" )
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
@@ -617,6 +628,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         
         private String jenkinsEmail;
         private String packageVersionFormat;
+        private String defaultDebianDirLocation;
 
         /**
          * Performs on-the-fly validation of the form field 'name'.
@@ -666,6 +678,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             jenkinsEmail = formData.getString( "jenkinsEmail" );
             packageVersionFormat = formData.getString( "packageVersionFormat" );
+            defaultDebianDirLocation = formData.getString( "defaultDebianDirLocation" );
             save();
             return super.configure(req,formData);
         }
@@ -684,6 +697,18 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         
         public String defaultPackageVersionFormat(){
             return "YYYYMMddHHmmss.%rev%.%build%";
+        }
+        
+        public String getDefaultDebianDirLocation(){
+            if( defaultDebianDirLocation == null || defaultDebianDirLocation.length() == 0 ){
+                return defaultDebDirLocation();
+            }
+            
+            return defaultDebianDirLocation;
+        }
+        
+        public String defaultDebDirLocation(){
+            return "source";
         }
     }
 }
