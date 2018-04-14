@@ -149,6 +149,50 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         
         return debianDirLocation;
     }
+
+    public boolean isDebianDistribution(){
+       switch(distribution.toLowerCase()) {
+          case "buzz":
+          case "rex":
+          case "bo":
+          case "hamm":
+          case "slink":
+          case "potato":
+          case "woody":
+          case "sarge":
+          case "etch":
+          case "lenny":
+          case "squeeze":
+          case "wheezy":
+          case "jessie":
+          case "stretch":
+          case "buster":
+          case "bullseye":
+          case "sid":
+            return true;
+       }
+       return false;
+    }
+
+    public boolean isUbuntuDistribution(){
+       switch(distribution.toLowerCase()) {
+          case "bionic":
+          case "artful":
+          case "xenial":
+          case "trusty":
+          case "zesty":
+          case "yakkety":
+          case "wiley":
+          case "vivid":
+          case "utopic":
+          case "saucy":
+          case "raring":
+          case "quantal":
+          case "precise":
+            return true;
+       }
+       return false;
+    }
     
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
@@ -289,7 +333,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         }
         
-        if( isUbuntu( workspace, launcher, listener ) ){
+        if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
             pbuildConfig.setDebootstrapOpts( "--keyring", "/usr/share/keyrings/debian-archive-keyring.gpg" );
         }
         
