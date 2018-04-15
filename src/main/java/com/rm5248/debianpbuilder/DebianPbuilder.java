@@ -334,7 +334,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
-            pbuildConfig.setDebootstrapOpts( "--keyring", "/usr/share/keyrings/debian-archive-keyring.gpg" );
+            File debianKeyring = new File( "/usr/share/keyrings/debian-archive-keyring.gpg" );
+            if( debianKeyring.exists() ){
+                pbuildConfig.setDebootstrapOpts( "--keyring", debianKeyring.getAbsolutePath() );
+            }else{
+                listener.getLogger().println( "Unable to find " + debianKeyring.getAbsolutePath()
+                        + ": We have detected that we are building a Debian package on Ubuntu, build may fail.  "
+                        + "If the build fails, try installing the package debian-archive-keyring" );
+            }
         }
         
         if( mirrorSite != null && mirrorSite.length() > 0 ){
