@@ -29,8 +29,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -61,7 +64,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String additionalBuildResults;
     private String architecture;
     private String debianDirLocation;
-    
+
+    public static final List<String> debianDistributions =
+        Collections.unmodifiableList(Arrays.asList("buzz", "rex", "bo", "hamm", "slink", "potato", "woody", "sarge", "etch", "lenny", "squeeze", "wheezy", "jessie", "stretch", "buster", "bullseye", "sid"));
+
+    public static final List<String> ubuntuDistributions =
+        Collections.unmodifiableList(Arrays.asList("bionic", "artful", "xenial", "trusty", "zesty", "yakkety", "wiley", "vivid", "utopic", "saucy", "raring", "quantal", "precise"));
+
     @DataBoundConstructor
     public DebianPbuilder(){
         numberCores = 1;
@@ -151,47 +160,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     public boolean isDebianDistribution(){
-       switch(distribution.toLowerCase()) {
-          case "buzz":
-          case "rex":
-          case "bo":
-          case "hamm":
-          case "slink":
-          case "potato":
-          case "woody":
-          case "sarge":
-          case "etch":
-          case "lenny":
-          case "squeeze":
-          case "wheezy":
-          case "jessie":
-          case "stretch":
-          case "buster":
-          case "bullseye":
-          case "sid":
-            return true;
-       }
-       return false;
+        return debianDistributions.contains(distribution.toLowerCase());
     }
 
     public boolean isUbuntuDistribution(){
-       switch(distribution.toLowerCase()) {
-          case "bionic":
-          case "artful":
-          case "xenial":
-          case "trusty":
-          case "zesty":
-          case "yakkety":
-          case "wiley":
-          case "vivid":
-          case "utopic":
-          case "saucy":
-          case "raring":
-          case "quantal":
-          case "precise":
-            return true;
-       }
-       return false;
+        return ubuntuDistributions.contains(distribution.toLowerCase());
     }
     
     @Override
