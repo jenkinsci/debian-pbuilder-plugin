@@ -334,7 +334,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
-            File debianKeyring = new File( "/usr/share/keyrings/debian-archive-keyring.gpg" );
+            File debianKeyring = new File( getDebianArchiveKeyringPath() );
             if( debianKeyring.exists() ){
                 pbuildConfig.setDebootstrapOpts( "--keyring", debianKeyring.getAbsolutePath() );
             }else{
@@ -374,6 +374,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return true;
     }
     
+    private String getDebianArchiveKeyringPath(){
+        return "/usr/share/keyrings/debian-archive-keyring.gpg";
+    }
+
     private String getActualArchitecture( Run<?,?> build, TaskListener listener )
             throws InterruptedException, IOException {
         if( build instanceof AbstractBuild ){
