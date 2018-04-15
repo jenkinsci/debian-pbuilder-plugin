@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -61,6 +62,42 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String additionalBuildResults;
     private String architecture;
     private String debianDirLocation;
+    
+    private static final String[] DEBIAN_DISTRIBUTIONS = {
+        "buzz", 
+        "rex", 
+        "bo", 
+        "hamm", 
+        "slink", 
+        "potato", 
+        "woody", 
+        "sarge", 
+        "etch", 
+        "lenny", 
+        "squeeze", 
+        "wheezy", 
+        "jessie", 
+        "stretch", 
+        "buster", 
+        "bullseye", 
+        "sid"
+    };
+    
+    private static final String[] UBUNTU_DISTRIBUTIONS = {
+        "bionic", 
+        "artful", 
+        "xenial", 
+        "trusty", 
+        "zesty", 
+        "yakkety", 
+        "wiley", 
+        "vivid", 
+        "utopic", 
+        "saucy", 
+        "raring", 
+        "quantal", 
+        "precise"
+    };
     
     @DataBoundConstructor
     public DebianPbuilder(){
@@ -151,47 +188,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     public boolean isDebianDistribution(){
-       switch(distribution.toLowerCase()) {
-          case "buzz":
-          case "rex":
-          case "bo":
-          case "hamm":
-          case "slink":
-          case "potato":
-          case "woody":
-          case "sarge":
-          case "etch":
-          case "lenny":
-          case "squeeze":
-          case "wheezy":
-          case "jessie":
-          case "stretch":
-          case "buster":
-          case "bullseye":
-          case "sid":
-            return true;
-       }
-       return false;
+        Arrays.sort( DEBIAN_DISTRIBUTIONS );
+        return Arrays.binarySearch( DEBIAN_DISTRIBUTIONS, distribution ) >= 0 ;
     }
 
     public boolean isUbuntuDistribution(){
-       switch(distribution.toLowerCase()) {
-          case "bionic":
-          case "artful":
-          case "xenial":
-          case "trusty":
-          case "zesty":
-          case "yakkety":
-          case "wiley":
-          case "vivid":
-          case "utopic":
-          case "saucy":
-          case "raring":
-          case "quantal":
-          case "precise":
-            return true;
-       }
-       return false;
+        Arrays.sort( UBUNTU_DISTRIBUTIONS );
+        return Arrays.binarySearch( UBUNTU_DISTRIBUTIONS, distribution ) >= 0 ;
     }
     
     @Override
