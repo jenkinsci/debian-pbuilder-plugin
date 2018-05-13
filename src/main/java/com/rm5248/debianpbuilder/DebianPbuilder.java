@@ -62,6 +62,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String additionalBuildResults;
     private String architecture;
     private String debianDirLocation;
+    private String keyring;
     
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz", 
@@ -153,6 +154,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public void setDebianDirLocation( String debianDirLocation ){
         this.debianDirLocation = debianDirLocation;
     }
+    
+    @DataBoundSetter
+    public void setKeyring( String keyring ){
+        this.keyring = keyring;
+    }
 
     public int getNumberCores(){
         return numberCores;
@@ -185,6 +191,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         return debianDirLocation;
+    }
+    
+    public String getKeyring(){
+        return keyring;
     }
 
     public boolean isDebianDistribution(){
@@ -336,16 +346,27 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         }
         
-        if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
+        String myKeyring = getKeyring();
+        if( myKeyring != null && 
+                myKeyring.length() > 1 &&
+                !myKeyring.equalsIgnoreCase( "disabled" ) ){
+            File theKeyring = new File( myKeyring );
+            pbuildConfig.setDebootstrapOpts( "--keyring", myKeyring );
+            if( !theKeyring.exists() ){
+                listener.getLogger().println( "Unable to find keyring " + theKeyring.getAbsolutePath()
+                        + ": build may fail" );
+            }
+        }else if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
             File debianKeyring = new File( getDebianArchiveKeyringPath() );
             if( debianKeyring.exists() ){
-                pbuildConfig.setDebootstrapOpts( "--keyring", debianKeyring.getAbsolutePath() );
+                 pbuildConfig.setDebootstrapOpts( "--keyring", debianKeyring.getAbsolutePath() );
             }else{
                 listener.getLogger().println( "Unable to find " + debianKeyring.getAbsolutePath()
                         + ": We have detected that we are building a Debian package on Ubuntu, build may fail.  "
                         + "If the build fails, try installing the package debian-archive-keyring" );
             }
         }
+        
         
         if( mirrorSite != null && mirrorSite.length() > 0 ){
             pbuildConfig.setMirrorSite( mirrorSite );

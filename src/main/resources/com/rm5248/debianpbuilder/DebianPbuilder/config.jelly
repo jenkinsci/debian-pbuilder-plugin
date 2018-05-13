@@ -23,5 +23,8 @@
         <f:entry title="Location of debian/ folder" field="debianDirLocation">
             <f:textbox default="${descriptor.defaultDebDirLocation()}"/>
         </f:entry>
+        <f:entry title="Keyring to build with" field="keyring">
+            <f:textbox default="${descriptor.getKeyring()}"/>
+        </f:entry>
     </f:advanced>
 </j:jelly>
