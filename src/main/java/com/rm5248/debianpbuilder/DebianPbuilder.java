@@ -278,6 +278,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             architecture = null;
         }
         
+        if( getDebianDirLocation().equals( "." ) ){
+            listener.getLogger().println( "FAILED: path to debian/ folder must not be current directory.  Check out to a sub-directory.");
+            return false;
+        }
+        
         boolean isTag = checkIfBuildingTag( envVars );
         
         if( !isTag ){
@@ -305,6 +310,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         if( !tarSources(workspace, launcher, listener) ){
             return false;
         }
+        
 
         generateChanges(workspace, launcher, listener, packageName, snapshotVersion);
         
