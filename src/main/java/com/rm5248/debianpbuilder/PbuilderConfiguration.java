@@ -14,6 +14,7 @@ class PbuilderConfiguration {
     private boolean m_useEatMyData;
     private String[] m_extraPackages;
     private String[] m_additionalBuild;
+    private String m_components;
     
     PbuilderConfiguration(){
         m_useNetwork = false;
@@ -46,6 +47,10 @@ class PbuilderConfiguration {
     
     void setAdditionalBuildResults( String ... buildResults ){
         m_additionalBuild = buildResults;
+    }
+
+    void setComponents( String components ){
+        m_components = components;
     }
     
     String toConfigFileString(){
@@ -109,6 +114,12 @@ class PbuilderConfiguration {
                 sb.append( " " );
             }
             sb.append( ")\n" );
+        }
+
+        if( m_components != null && m_components.length() > 0 ){
+            sb.append( "COMPONENTS=\"" );
+            sb.append( m_components );
+            sb.append( "\"\n" );
         }
         
         return sb.toString();

@@ -63,6 +63,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String architecture;
     private String debianDirLocation;
     private String keyring;
+    private String m_components;
+    private boolean m_guessComponents;
     
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz", 
@@ -160,6 +162,16 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         this.keyring = keyring;
     }
 
+    @DataBoundSetter
+    public void setComponents( String components ){
+        this.m_components = components;
+    }
+
+    @DataBoundSetter
+    public void setGuessComponents( boolean guess ){
+        this.m_guessComponents = guess;
+    }
+
     public int getNumberCores(){
         return numberCores;
     }
@@ -205,6 +217,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public boolean isUbuntuDistribution(){
         Arrays.sort( UBUNTU_DISTRIBUTIONS );
         return Arrays.binarySearch( UBUNTU_DISTRIBUTIONS, distribution ) >= 0 ;
+    }
+
+    public String getComponents(){
+        return m_components;
+    }
+
+    public boolean getGuessComponents(){
+        return m_guessComponents;
     }
     
     @Override
@@ -352,6 +372,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         }
         
+        boolean ubuntuOnDebian = false;
         String myKeyring = getKeyring();
         if( myKeyring != null && 
                 myKeyring.length() > 1 &&
@@ -363,6 +384,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                         + ": build may fail" );
             }
         }else if( isUbuntu( workspace, launcher, listener ) && isDebianDistribution() ){
+            ubuntuOnDebian = true;
             File debianKeyring = new File( getDebianArchiveKeyringPath() );
             if( debianKeyring.exists() ){
                  pbuildConfig.setDebootstrapOpts( "--keyring", debianKeyring.getAbsolutePath() );
@@ -371,6 +393,12 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                         + ": We have detected that we are building a Debian package on Ubuntu, build may fail.  "
                         + "If the build fails, try installing the package debian-archive-keyring" );
             }
+        }
+
+        if( ubuntuOnDebian && m_guessComponents ){
+            pbuildConfig.setComponents( "main restricted universe multiverse" );
+        }else{
+            pbuildConfig.setComponents( m_components );
         }
         
         

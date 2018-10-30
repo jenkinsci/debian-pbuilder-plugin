@@ -26,5 +26,11 @@
         <f:entry title="Keyring to build with" field="keyring">
             <f:textbox default="${descriptor.getKeyring()}"/>
         </f:entry>
+        <f:entry title="Components for apt" field="components">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="Guess components" field="guessComponents">
+            <f:checkbox default="checked"/>
+        </f:entry>
     </f:advanced>
 </j:jelly>
