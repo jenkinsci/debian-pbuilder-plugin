@@ -32,5 +32,8 @@
         <f:entry title="Guess components" field="guessComponents">
             <f:checkbox default="checked"/>
         </f:entry>
+        <f:entry title="Pristine tar file name" field="pristineTarName">
+            <f:textbox />
+        </f:entry>
     </f:advanced>
 </j:jelly>

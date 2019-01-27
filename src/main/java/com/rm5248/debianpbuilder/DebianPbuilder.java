@@ -15,6 +15,7 @@ import hudson.model.TaskListener;
 import hudson.scm.SCM;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -65,6 +66,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String keyring;
     private String m_components;
     private boolean m_guessComponents;
+    private String m_pristineTarName;
     
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz", 
@@ -101,6 +103,12 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         "quantal", 
         "precise"
     };
+    
+    private enum PackageType{
+        INVALID,
+        NATIVE,
+        QUILT
+    }
     
     @DataBoundConstructor
     public DebianPbuilder(){
@@ -171,6 +179,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public void setGuessComponents( boolean guess ){
         this.m_guessComponents = guess;
     }
+    
+    @DataBoundSetter
+    public void setPristineTarName( String pristinetarName ){
+        m_pristineTarName = pristinetarName;
+    }
 
     public int getNumberCores(){
         return numberCores;
@@ -227,6 +240,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return m_guessComponents;
     }
     
+    public String getPristineTarName(){
+        return m_pristineTarName;
+    }
+    
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
             throws InterruptedException, IOException {
@@ -254,6 +271,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         FilePath hookdir = null;
         PbuilderConfiguration pbuildConfig = new PbuilderConfiguration();
         EnvVars envVars = build.getEnvironment(listener);
+        PackageType type;
         
         if( !launcher.isUnix() ){
             listener.getLogger().println( "Can't build: not on Unix-like system" );
@@ -301,6 +319,21 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         if( getDebianDirLocation().equals( "." ) ){
             listener.getLogger().println( "FAILED: path to debian/ folder must not be current directory.  Check out to a sub-directory.");
             return false;
+        }
+        
+        switch( getPackageType( workspace ) ){
+            case INVALID:
+                listener.getLogger().println( "This does not appear to be a debian package" );
+                return false;
+            case NATIVE:
+                // Nothing to do, no source to get
+                break;
+            case QUILT:
+                if( m_pristineTarName != null && m_pristineTarName.length() > 1 ){
+                    if( !createPristineTar( workspace, launcher, listener ) ){
+                        return false;
+                    }
+                }
         }
         
         boolean isTag = checkIfBuildingTag( envVars );
@@ -429,6 +462,52 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         BuildListenerAdapter bl = new BuildListenerAdapter( listener );
         build.pickArtifactManager().archive( binariesLocation, launcher, bl, files );
                 
+        return true;
+    }
+    
+    private PackageType getPackageType( FilePath workspace ) throws IOException, InterruptedException {       
+        FilePath formatFile = workspace.child( getDebianDirLocation() )
+                .child( "debian" )
+                .child( "source" )
+                .child( "format" );
+        Scanner scan = new Scanner( formatFile.read(), "UTF-8" );
+        
+        String line = scan.nextLine();
+        
+        if( line.indexOf( "quilt" ) > 0 ){
+            return PackageType.QUILT;
+        }else if( line.indexOf( "native" ) > 0 ){
+            return PackageType.NATIVE;
+        }
+        
+        return PackageType.INVALID;
+    }
+    
+    private boolean createPristineTar( FilePath workspace, Launcher launcher, TaskListener listener ) throws IOException, InterruptedException {
+        //Assuming that people are sane and number their packages appropriately,
+        //the following should get us the best tar file.
+        //pristine-tar list | sort -V  
+        //for now though, we will simply let people checkout what they want in
+        //an attempt to not be too helpful
+        
+        if( workspace == null ){
+            return false;
+        }
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Launcher.ProcStarter pristineTar = launcher
+            .launch()
+            .pwd( workspace.child( getDebianDirLocation() ) )
+            .cmds( "pristine-tar", "checkout", "../" + m_pristineTarName )
+            .stdout( listener.getLogger() );
+        Proc proc = pristineTar.start();
+        
+        int status = proc.join();
+        
+        if( status != 0 ){
+            return false;
+        }
+        
         return true;
     }
     
