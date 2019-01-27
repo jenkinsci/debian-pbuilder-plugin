@@ -494,7 +494,6 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
         
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Launcher.ProcStarter pristineTar = launcher
             .launch()
             .pwd( workspace.child( getDebianDirLocation() ) )
