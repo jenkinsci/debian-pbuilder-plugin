@@ -41,9 +41,7 @@ class CowbuilderHelper {
     private Launcher m_launcher;
     private String m_dpkgArch;
     private String m_hookdir;
-    private String m_buildLockfile;
     private String m_updateLockfile;
-    private String m_updateLockfilePid;
     private PrintStream m_logger;
     private FilePath m_pbuilderrc;
     private File m_pbuilderrcAsFile;
@@ -67,9 +65,7 @@ class CowbuilderHelper {
         m_cowbuilderBase = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_architecture );
         
         String baseLockfile = "/var/run/lock/" + m_distribution + "-" + getArch();
-        m_buildLockfile = baseLockfile + ".building." + getPID();
         m_updateLockfile = baseLockfile + ".update";
-        m_updateLockfilePid = baseLockfile + ".update." + getPID();
                 
         LOGGER.fine( "Pbuilder config: " + pbuilderConfig.toConfigFileString() );
         
@@ -89,20 +85,32 @@ class CowbuilderHelper {
         //note: this will lock on the master, is that what we want? 
         //unsure.....
         FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
+        int times = 0;
         
-        try( FileLock lock = fc.tryLock() ){
-            if( lock == null || m_workspace == null ){
-                return false;
+        do{
+            try( FileLock lock = fc.tryLock() ){
+                if( lock == null || m_workspace == null ){
+                    return false;
+                }
+
+                boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
+
+                if( !baseExists ){
+                    return createCowbuilderBase();
+                }else{
+                    return updateCowbuilderBase();
+                }
+            }catch( IOException ex ){
+                LOGGER.fine( "Unable to get lock, will try again.  Reason: " + ex.getMessage() );
             }
             
-            boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
-            
-            if( !baseExists ){
-                return createCowbuilderBase();
-            }else{
-                return updateCowbuilderBase();
-            }
-        }
+            try{
+                LOGGER.fine( "Unable to acquire lock, sleeping for 10 seconds..." );
+                Thread.sleep( 10000 );
+            }catch( InterruptedException ex ){}
+        }while( ++times < 10 );
+        
+        return false;
     }
     
     private boolean createCowbuilderBase() throws IOException, InterruptedException {        
@@ -231,7 +239,6 @@ class CowbuilderHelper {
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings( value="NP_LOAD_OF_KNOWN_NULL_VALUE",
                     justification="Does not produce valid output(load of known null at end of try block)" )
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
-        FileChannel fc = new RandomAccessFile( m_buildLockfile, "rw" ).getChannel();
         boolean retValue;
         
         if( outputDirectory == null || sourceFile == null ){
@@ -242,17 +249,10 @@ class CowbuilderHelper {
         
         File io_outputFile = new File( outputDirectory.toURI() );
         File io_sourceFile = new File( sourceFile.toURI() );
-        
-        try( FileLock lock = fc.tryLock() ){
-            if( lock == null ){
-                return false;
-            }
             
-            retValue = doBuild( io_outputFile.getAbsolutePath(), 
-                    io_sourceFile.getAbsolutePath(),
-                    numCores );
-            
-        }
+        retValue = doBuild( io_outputFile.getAbsolutePath(), 
+                io_sourceFile.getAbsolutePath(),
+                numCores );
         
         return retValue;
     }
