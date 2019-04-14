@@ -18,6 +18,7 @@ import java.io.RandomAccessFile;
 import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,7 +101,7 @@ class CowbuilderHelper {
                 }else{
                     return updateCowbuilderBase();
                 }
-            }catch( IOException ex ){
+            }catch( OverlappingFileLockException ex ){
                 LOGGER.fine( "Unable to get lock, will try again.  Reason: " + ex.getMessage() );
             }
             
