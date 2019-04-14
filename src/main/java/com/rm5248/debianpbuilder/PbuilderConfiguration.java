@@ -3,9 +3,29 @@ package com.rm5248.debianpbuilder;
 /**
  * Represents the pbuilder configuration.
  * 
- * See man pbuilderrc for all of the possible confgi options
+ * See man pbuilderrc for all of the possible config options
  */
 class PbuilderConfiguration {
+    
+    enum SatisfyDependsResolver {
+        APT("pbuilder-satsifydepends-apt"),
+        EXPERIMENTAL("pbuilder-satisfydepends-experimental"),
+        APTITUDE("pbuilder-satisfydepends-aptitude"),
+        GDEBI("pbuilder-satisfydepends-gdebi"),
+        CLASSIC("pbuilder-satisfydepends-classic"),
+        DEFAULT("")
+        ;
+        
+        private final String m_resolverName;
+         
+        private SatisfyDependsResolver(String name){
+            m_resolverName = name;
+        }
+        
+        public String getResolverName(){
+            return m_resolverName;
+        }
+    }
     
     private boolean m_useNetwork;
     private String m_debootstrap;
@@ -15,10 +35,12 @@ class PbuilderConfiguration {
     private String[] m_extraPackages;
     private String[] m_additionalBuild;
     private String m_components;
+    private SatisfyDependsResolver m_satisfyDependsCommand;
     
     PbuilderConfiguration(){
         m_useNetwork = false;
         m_useEatMyData = false;
+        m_satisfyDependsCommand = SatisfyDependsResolver.DEFAULT;
     }
     
     void setNetwork( boolean network ){
@@ -51,6 +73,10 @@ class PbuilderConfiguration {
 
     void setComponents( String components ){
         m_components = components;
+    }
+    
+    void setSatisfyDependsCommand( SatisfyDependsResolver depends ){
+        m_satisfyDependsCommand = depends;
     }
     
     String toConfigFileString(){
@@ -120,6 +146,12 @@ class PbuilderConfiguration {
             sb.append( "COMPONENTS=\"" );
             sb.append( m_components );
             sb.append( "\"\n" );
+        }
+        
+        if( m_satisfyDependsCommand != SatisfyDependsResolver.DEFAULT ){
+            sb.append("PBUILDERSATISFYDEPENDSCMD=");
+            sb.append( m_satisfyDependsCommand.getResolverName() );
+            sb.append("\n");
         }
         
         return sb.toString();

@@ -439,6 +439,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             pbuildConfig.setMirrorSite( mirrorSite );
         }
         
+        pbuildConfig.setSatisfyDependsCommand( getDescriptor().getDependsResolverEnum() );
+        
         //Now that we have our sources, run debootstrap
         cowHelp = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
                 architecture, distribution, 
@@ -820,6 +822,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         private String jenkinsEmail;
         private String packageVersionFormat;
         private String defaultDebianDirLocation;
+        private PbuilderConfiguration.SatisfyDependsResolver m_dependsResolver;
+        
+        public DescriptorImpl(){
+            m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
+        }
 
         /**
          * Performs on-the-fly validation of the form field 'name'.
@@ -870,6 +877,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             jenkinsEmail = formData.getString( "jenkinsEmail" );
             packageVersionFormat = formData.getString( "packageVersionFormat" );
             defaultDebianDirLocation = formData.getString( "defaultDebianDirLocation" );
+            try{
+                m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( 
+                    formData.getString( "defaultDependsResolver" ) );
+            }catch( IllegalArgumentException ex ){
+                m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
+            }
+            
             save();
             return super.configure(req,formData);
         }
@@ -900,6 +914,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         
         public String defaultDebDirLocation(){
             return "source";
+        }
+        
+        public String getDefaultDependsResolver(){
+            return m_dependsResolver.getResolverName();
+        }
+        
+        PbuilderConfiguration.SatisfyDependsResolver getDependsResolverEnum(){
+            return m_dependsResolver;
         }
     }
 }

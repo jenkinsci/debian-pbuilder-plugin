@@ -10,5 +10,15 @@
         <f:entry title="Default location of debian/ folder" field="defaultDebianDirLocation">
             <f:textbox default="${descriptor.defaultDebDirLocation()}"/>
         </f:entry>
+        <f:entry title="Default dependency resolver" field="defaultDependsResolver">
+            <select name="defaultDependsResolver">
+                <option value="DEFAULT">Default Resolver</option>
+                <option value="APT">Apt Resolver</option>
+                <option value="EXPERIMENTAL">Experimental Resolver</option>
+                <option value="APTITUDE">Aptitude Resolver</option>
+                <option value="GDEBI">gdebi Resolver</option>
+                <option value="CLASSIC">Classic Resolver</option>
+            </select>
+        </f:entry>
     </f:section>
 </j:jelly>
