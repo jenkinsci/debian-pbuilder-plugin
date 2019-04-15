@@ -12,12 +12,12 @@
         </f:entry>
         <f:entry title="Default dependency resolver" field="defaultDependsResolver">
             <select name="defaultDependsResolver">
-                <option value="DEFAULT">Default Resolver</option>
-                <option value="APT">Apt Resolver</option>
-                <option value="EXPERIMENTAL">Experimental Resolver</option>
-                <option value="APTITUDE">Aptitude Resolver</option>
-                <option value="GDEBI">gdebi Resolver</option>
-                <option value="CLASSIC">Classic Resolver</option>
+                <f:option value="DEFAULT" selected="${descriptor.defaultDependsResolver == 'DEFAULT'}">Default Resolver</f:option>
+                <f:option value="APT" selected="${descriptor.defaultDependsResolver == 'APT'}">Apt Resolver</f:option>
+                <f:option value="EXPERIMENTAL" selected="${descriptor.defaultDependsResolver == 'EXPERIMENTAL'}">Experimental Resolver</f:option>
+                <f:option value="APTITUDE" selected="${descriptor.defaultDependsResolver =='APTITUDE'}">Aptitude Resolver</f:option>
+                <f:option value="GDEBI" selected="${descriptor.defaultDependsResolver =='GDEBI'}">gdebi Resolver</f:option>
+                <f:option value="CLASSIC" selected="${descriptor.defaultDependsResolver =='CLASSIC'}">Classic Resolver</f:option>
             </select>
         </f:entry>
     </f:section>

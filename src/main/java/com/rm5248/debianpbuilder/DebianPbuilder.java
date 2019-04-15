@@ -822,12 +822,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         private String jenkinsEmail;
         private String packageVersionFormat;
         private String defaultDebianDirLocation;
-        private PbuilderConfiguration.SatisfyDependsResolver m_dependsResolver;
-        
-        public DescriptorImpl(){
-            m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
-        }
+        private String dependsResolver;
 
+        public DescriptorImpl(){
+            load();
+            if( dependsResolver == null || dependsResolver.length() == 0 ){
+                dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
+            }
+        }
+        
         /**
          * Performs on-the-fly validation of the form field 'name'.
          *
@@ -878,10 +881,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             packageVersionFormat = formData.getString( "packageVersionFormat" );
             defaultDebianDirLocation = formData.getString( "defaultDebianDirLocation" );
             try{
-                m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( 
-                    formData.getString( "defaultDependsResolver" ) );
+                dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( 
+                    formData.getString( "defaultDependsResolver" ) ).name();
             }catch( IllegalArgumentException ex ){
-                m_dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
+                dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
             }
             
             save();
@@ -917,11 +920,22 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
         
         public String getDefaultDependsResolver(){
-            return m_dependsResolver.getResolverName();
+            if( dependsResolver == null || dependsResolver.length() == 0 ){
+                return PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
+            }
+            return dependsResolver;
         }
         
         PbuilderConfiguration.SatisfyDependsResolver getDependsResolverEnum(){
-            return m_dependsResolver;
+            PbuilderConfiguration.SatisfyDependsResolver resolver;
+            
+            try{
+                resolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( getDefaultDependsResolver() );
+            }catch( IllegalArgumentException ex ){
+                resolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
+            }
+            
+            return resolver;
         }
     }
 }
