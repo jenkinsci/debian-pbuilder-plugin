@@ -8,7 +8,7 @@ package com.rm5248.debianpbuilder;
 class PbuilderConfiguration {
     
     enum SatisfyDependsResolver {
-        APT("pbuilder-satsifydepends-apt"),
+        APT("pbuilder-satisfydepends-apt"),
         EXPERIMENTAL("pbuilder-satisfydepends-experimental"),
         APTITUDE("pbuilder-satisfydepends-aptitude"),
         GDEBI("pbuilder-satisfydepends-gdebi"),
