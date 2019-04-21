@@ -47,11 +47,11 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Jenkins plugin that builds Debian packages in a pbuilder/cowbuilder environement.
- * 
+ *
  * Based off of: https://jenkins-debian-glue.org/
- * 
+ *
  * The reason for having this as an actual plugin instead of the scripts is so that
- * we can have builders on different machines that can all communicate back to the 
+ * we can have builders on different machines that can all communicate back to the
  * master Jenkins instance.
  */
 public class DebianPbuilder extends Builder implements SimpleBuildStep {
@@ -67,58 +67,58 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String m_components;
     private boolean m_guessComponents;
     private String m_pristineTarName;
-    
+
     private static final String[] DEBIAN_DISTRIBUTIONS = {
-        "buzz", 
-        "rex", 
-        "bo", 
-        "hamm", 
-        "slink", 
-        "potato", 
-        "woody", 
-        "sarge", 
-        "etch", 
-        "lenny", 
-        "squeeze", 
-        "wheezy", 
-        "jessie", 
-        "stretch", 
-        "buster", 
-        "bullseye", 
+        "buzz",
+        "rex",
+        "bo",
+        "hamm",
+        "slink",
+        "potato",
+        "woody",
+        "sarge",
+        "etch",
+        "lenny",
+        "squeeze",
+        "wheezy",
+        "jessie",
+        "stretch",
+        "buster",
+        "bullseye",
         "sid"
     };
-    
+
     private static final String[] UBUNTU_DISTRIBUTIONS = {
-        "bionic", 
-        "artful", 
-        "xenial", 
-        "trusty", 
-        "zesty", 
-        "yakkety", 
-        "wiley", 
-        "vivid", 
-        "utopic", 
-        "saucy", 
-        "raring", 
-        "quantal", 
+        "bionic",
+        "artful",
+        "xenial",
+        "trusty",
+        "zesty",
+        "yakkety",
+        "wiley",
+        "vivid",
+        "utopic",
+        "saucy",
+        "raring",
+        "quantal",
         "precise"
     };
-    
+
     private enum PackageType{
         INVALID,
         NATIVE,
         QUILT
     }
-    
+
     @DataBoundConstructor
     public DebianPbuilder(){
         numberCores = 1;
     }
 
     @Deprecated
-    public DebianPbuilder(int numberCores, 
-            String distribution, 
-            String mirrorSite, 
+    public DebianPbuilder(int numberCores,
+            String distribution,
+            String mirrorSite,
             boolean buildAsTag,
             String additionalBuildResults,
             String architecture) {
@@ -129,42 +129,42 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         this.additionalBuildResults = additionalBuildResults;
         this.architecture = architecture;
     }
-    
+
     @DataBoundSetter
     public void setNumberCores( int cores ){
         numberCores = cores;
     }
-    
+
     @DataBoundSetter
     public void setDistribution( String distribution ){
         this.distribution  = distribution;
     }
-    
+
     @DataBoundSetter
     public void setMirrorSite( String mirrorSite ){
         this.mirrorSite = mirrorSite;
     }
-    
+
     @DataBoundSetter
     public void setBuildAsTag( boolean buildAsTag ){
         this.buildAsTag = buildAsTag;
     }
-    
+
     @DataBoundSetter
     public void setAdditionalBuildResults( String additionalBuildResults ){
         this.additionalBuildResults = additionalBuildResults;
     }
-    
+
     @DataBoundSetter
     public void setArchitecture( String architecture ){
         this.architecture = architecture;
     }
-    
+
     @DataBoundSetter
     public void setDebianDirLocation( String debianDirLocation ){
         this.debianDirLocation = debianDirLocation;
     }
-    
+
     @DataBoundSetter
     public void setKeyring( String keyring ){
         this.keyring = keyring;
@@ -179,7 +179,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public void setGuessComponents( boolean guess ){
         this.m_guessComponents = guess;
     }
-    
+
     @DataBoundSetter
     public void setPristineTarName( String pristinetarName ){
         m_pristineTarName = pristinetarName;
@@ -188,36 +188,36 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public int getNumberCores(){
         return numberCores;
     }
-    
+
     public String getDistribution(){
         return distribution;
     }
-    
+
     public String getMirrorSite(){
         return mirrorSite;
     }
-    
+
     public boolean getBuildAsTag(){
         return buildAsTag;
     }
-    
+
     public String getAdditionalBuildResults(){
         return additionalBuildResults;
     }
-    
+
     public String getArchitecture(){
         return architecture;
     }
-    
+
     public String getDebianDirLocation(){
-        if( this.debianDirLocation == null || 
+        if( this.debianDirLocation == null ||
            this.debianDirLocation.length() == 0 ){
             return getDescriptor().getDefaultDebianDirLocation();
         }
-        
+
         return debianDirLocation;
     }
-    
+
     public String getKeyring(){
         return keyring;
     }
@@ -239,28 +239,28 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public boolean getGuessComponents(){
         return m_guessComponents;
     }
-    
+
     public String getPristineTarName(){
         return m_pristineTarName;
     }
-    
+
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
             throws InterruptedException, IOException {
         boolean success = doTheBuild( run, workspace, launcher, listener );
-        
+
         if( !success ){
             throw new AbortException( "Unable to build properly" );
         }
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) 
+    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
             throws InterruptedException, IOException {
-        
+
         return doTheBuild( build, build.getWorkspace(), launcher, listener );
     }
-    
+
     private boolean doTheBuild( Run<?,?> build, FilePath workspace, Launcher launcher, TaskListener listener )
             throws InterruptedException, IOException {
         String architecture = null;
@@ -272,58 +272,62 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         PbuilderConfiguration pbuildConfig = new PbuilderConfiguration();
         EnvVars envVars = build.getEnvironment(listener);
         PackageType type;
-        
+
         if( !launcher.isUnix() ){
             listener.getLogger().println( "Can't build: not on Unix-like system" );
             return false;
         }
-        
+
         if( workspace == null ){
             listener.getLogger().println( "Can't build: workspace is  null" );
             return false;
         }
-        
+
         if( !ensureDpkgParseChangelogIsValid(launcher, listener) ){
             return false;
         }
-        
+
         if( !isDebianPackage(workspace, launcher, listener) ){
             listener.getLogger().println( "We do not appear to have an actual package" );
             return false;
         }
-        
+
         String packageName = getDpkgField(workspace, launcher, listener, "source" );
         if( packageName == null ){
             listener.getLogger().println( "Unable to get package name(source) from changelog" );
             return false;
         }
-        
+
         String version = getDpkgField(workspace, launcher, listener, "version" );
         if( version == null ){
             listener.getLogger().println( "Unable to get version from changelog" );
             return false;
         }
-        
+
         String distribution = getDpkgField(workspace, launcher, listener, "distribution" );
         if( distribution == null ){
             listener.getLogger().println( "Unable to get distribution from changelog" );
             return false;
         }
-        
+
         architecture = getActualArchitecture( build, listener );
         if( architecture != null && architecture.length() == 0 ){
             listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
             architecture = null;
         }
-        
+
         if( getDebianDirLocation().equals( "." ) ){
             listener.getLogger().println( "FAILED: path to debian/ folder must not be current directory.  Check out to a sub-directory.");
             return false;
         }
-        
+
         switch( getPackageType( workspace ) ){
             case INVALID:
-                listener.getLogger().println( "This does not appear to be a debian package" );
+                listener.getLogger().println( "This does not appear to be a "
+                        + "debian package.  Possible reasons include: "
+                        + "no debian/source/format file; package is neither "
+                        + "native or quilt"
+                );
                 return false;
             case NATIVE:
                 // Nothing to do, no source to get
@@ -335,19 +339,19 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                     }
                 }
         }
-        
+
         boolean isTag = checkIfBuildingTag( envVars );
-        
+
         if( !isTag ){
             //we are not building a tag, update the version appropriately
-            
+
             if( distribution.equalsIgnoreCase( "unreleased" ) ){
                 //do not raise the version number if this is an unreleased version
                 snapshotVersion = version + "~";
             }else{
                 snapshotVersion = version + "+0";
             }
-            snapshotVersion += PackageVersionFormatter.formatPackageVersion( 
+            snapshotVersion += PackageVersionFormatter.formatPackageVersion(
                     getDescriptor().getPackageVersionFormat(), envVars, build.getNumber() );
 
             listener.getLogger().println( "Snapshot version: " + snapshotVersion );
@@ -363,21 +367,21 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         if( !tarSources(workspace, launcher, listener) ){
             return false;
         }
-        
+
 
         generateChanges(workspace, launcher, listener, packageName, snapshotVersion);
-        
+
         binariesLocation = workspace.createTempDir( "binaries", null );
         hookdir = workspace.child( "hookdir" );
         if( !hookdir.exists() ){
             hookdir.mkdirs();
         }
-        
+
         //make sure any files in the hookdir are executable
         for( FilePath path : hookdir.list() ){
             path.chmod( 0755 );
         }
-        
+
         for( FilePath path : workspace.list() ){
             if( path.getName().endsWith( ".dsc" ) ){
                 if( dscFile != null ){
@@ -387,27 +391,27 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 dscFile = path;
             }
         }
-        
+
         if( distribution.equalsIgnoreCase( "UNRELEASED" ) ){
             distribution = getStdoutOfProcess(workspace, launcher, listener, "lsb_release", "--short", "--codename" );
             if( distribution == null ){
                 distribution = "sid";
             }
         }
-        
+
         //user provided a distribution, override automatic settings
         if( this.distribution != null && this.distribution.length() > 0 ){
             distribution = this.distribution;
         }
-        
+
         pbuildConfig.setNetwork( true );
         if( additionalBuildResults != null && additionalBuildResults.length() > 0 ){
             pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         }
-        
+
         boolean ubuntuOnDebian = false;
         String myKeyring = getKeyring();
-        if( myKeyring != null && 
+        if( myKeyring != null &&
                 myKeyring.length() > 1 &&
                 !myKeyring.equalsIgnoreCase( "disabled" ) ){
             File theKeyring = new File( myKeyring );
@@ -433,85 +437,90 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }else{
             pbuildConfig.setComponents( m_components );
         }
-        
-        
+
+
         if( mirrorSite != null && mirrorSite.length() > 0 ){
             pbuildConfig.setMirrorSite( mirrorSite );
         }
-        
+
         pbuildConfig.setSatisfyDependsCommand( getDescriptor().getDependsResolverEnum() );
-        
+
         //Now that we have our sources, run debootstrap
         cowHelp = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
-                architecture, distribution, 
+                architecture, distribution,
                 new File( hookdir.toURI() ).getAbsolutePath(),
                 pbuildConfig);
-        
+
         if( !cowHelp.createOrUpdateCowbuilder() ){
             return false;
         }
-        
+
         if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
             return false;
         }
-        
-        
+
+
         Map<String,String> files = new HashMap<String,String>();
         for( FilePath path : binariesLocation.list() ){
             files.put( path.getName(), path.getName() );
         }
-        
+
         BuildListenerAdapter bl = new BuildListenerAdapter( listener );
         build.pickArtifactManager().archive( binariesLocation, launcher, bl, files );
-                
+
         return true;
     }
-    
-    private PackageType getPackageType( FilePath workspace ) throws IOException, InterruptedException {       
+
+    private PackageType getPackageType( FilePath workspace ) throws IOException, InterruptedException {
         FilePath formatFile = workspace.child( getDebianDirLocation() )
                 .child( "debian" )
                 .child( "source" )
                 .child( "format" );
+
+        if( !formatFile.exists() ){
+            return PackageType.INVALID;
+        }
+
         Scanner scan = new Scanner( formatFile.read(), "UTF-8" );
-        
+
         String line = scan.nextLine();
-        
+
         if( line.indexOf( "quilt" ) > 0 ){
             return PackageType.QUILT;
         }else if( line.indexOf( "native" ) > 0 ){
             return PackageType.NATIVE;
         }
-        
+
         return PackageType.INVALID;
     }
-    
+
     private boolean createPristineTar( FilePath workspace, Launcher launcher, TaskListener listener ) throws IOException, InterruptedException {
         //Assuming that people are sane and number their packages appropriately,
         //the following should get us the best tar file.
-        //pristine-tar list | sort -V  
+        //pristine-tar list | sort -V
         //for now though, we will simply let people checkout what they want in
         //an attempt to not be too helpful
-        
+
         if( workspace == null ){
             return false;
         }
-        
+
         Launcher.ProcStarter pristineTar = launcher
             .launch()
             .pwd( workspace.child( getDebianDirLocation() ) )
             .cmds( "pristine-tar", "checkout", "../" + m_pristineTarName )
             .stdout( listener.getLogger() );
         Proc proc = pristineTar.start();
-        
+
         int status = proc.join();
-        
+
         if( status != 0 ){
             return false;
         }
-        
+
         return true;
     }
-    
+
     private String getDebianArchiveKeyringPath(){
         return "/usr/share/keyrings/debian-archive-keyring.gpg";
     }
@@ -520,7 +529,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             throws InterruptedException, IOException {
         if( build instanceof AbstractBuild ){
             EnvVars env = build.getEnvironment( listener );
-            
+
             if( !env.containsKey( "architecture" ) ){
                 if( architecture != null && architecture.length() > 0 ){
                     listener.getLogger().println( "No architecture variable in environment"
@@ -532,16 +541,16 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                     return null;
                 }
             }
-            
+
             return env.get( "architecture" );
         }else{
             return architecture;
         }
     }
-    
+
     /**
      * Ensure that dpkg-parsechangelog is installed and >= 1.17
-     * @return 
+     * @return
      */
     private boolean ensureDpkgParseChangelogIsValid(Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = launcher
@@ -550,35 +559,35 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             .readStdout();
         Proc proc = procStarter.start();
         proc.join();
-        
+
         Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-        
+
         String line = scan.nextLine();
-        
+
         String pattern = ".*version (\\d+)\\.(\\d+)\\.(\\d+)";
         Matcher m = Pattern.compile( pattern ).matcher( line );
-        
+
         if( m.find() ){
             int major = Integer.parseInt( m.group( 1 ) );
             int minor = Integer.parseInt( m.group( 2 ) );
             //int patch = Integer.parseInt( m.group( 3 ) );
-            
+
             return ( major >= 1 && minor >= 17 );
         }
-        
+
         listener.getLogger().println( "Can't continue: dpkg-parsechangelog is "
                 + "not new enough(needs to be at least 1.17.0)" );
-        
+
         return false;
     }
-    
+
     /**
      * Basic check to see if we are actually trying to build a debian package.
-     * 
+     *
      * @param build
      * @param launcher
      * @param listener
-     * @return 
+     * @return
      */
     private boolean isDebianPackage( FilePath workspace, Launcher launcher, TaskListener listener ) throws IOException, InterruptedException{
         if( workspace == null ){
@@ -597,7 +606,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
         return true;
     }
-    
+
     private String getDpkgField( FilePath workspace, Launcher launcher, TaskListener listener, String fieldName ) throws IOException, InterruptedException {
         if( workspace == null ){
             return null;
@@ -608,22 +617,22 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             .cmds( "dpkg-parsechangelog", "--show-field", fieldName )
             .readStdout();
         Proc proc = procStarter.start();
-        
+
         int status = proc.join();
-        
+
         if( status != 0 ){
             return null;
         }
-        
+
         Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-        
+
         return scan.nextLine();
     }
-    
+
     /**
      * Force update the changelog.  Don't use any of the debian scripts to update,
      * since we just want new stuff + old.  This is what jenkins-debian-glue does with SVN snapshots.
-     * 
+     *
      */
     private void updateChangelog( Launcher launcher, FilePath changelog, String packageName, String snapshotVersion ) throws IOException, InterruptedException {
         Scanner scan = new Scanner( changelog.read(), "UTF-8" );
@@ -632,40 +641,40 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 getEmail(launcher) + ">";
         java.time.ZonedDateTime now = java.time.ZonedDateTime.now();
         DateTimeFormatter dtFormat = DateTimeFormatter.ofPattern( "ccc, dd MMM YYYY HH:mm:ss Z");
-                
+
         strBuild.append( packageName );
         strBuild.append( " (" );
         strBuild.append( snapshotVersion );
         strBuild.append( ") UNRELEASED; urgency=low" );
         strBuild.append( System.lineSeparator() );
         strBuild.append( System.lineSeparator() );
-        
+
         strBuild.append( "  ** SNAPSHOT Build **" );
         strBuild.append( System.lineSeparator() );
         strBuild.append( System.lineSeparator() );
-        
+
         strBuild.append( " -- " );
         strBuild.append( debEmail );
         strBuild.append( "  " );
         strBuild.append( now.format( dtFormat ) );
         strBuild.append( System.lineSeparator() );
         strBuild.append( System.lineSeparator() );
-        
+
         while( scan.hasNextLine() ){
             strBuild.append( scan.nextLine() );
             strBuild.append( System.lineSeparator() );
         }
-        
+
         scan.close();
-                
+
         Writer w = new OutputStreamWriter( changelog.write(), "UTF-8" );
         w.write( strBuild.toString() );
         w.close();
     }
-    
+
     private String getEmail( Launcher launcher ) throws IOException, InterruptedException{
         String email = getDescriptor().getJenkinsEmail();
-        
+
         if( email == null || email.length() == 0 ){
             Launcher.ProcStarter procStarter = launcher
                 .launch()
@@ -674,14 +683,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             Proc proc = procStarter.start();
             proc.join();
             Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-            
+
             return "jenkins@" + scan.nextLine();
         }
-        
+
         return email;
     }
-    
-    private boolean tarSources( FilePath workspace, Launcher launcher, TaskListener listener ) 
+
+    private boolean tarSources( FilePath workspace, Launcher launcher, TaskListener listener )
         throws IOException, InterruptedException{
         Launcher.ProcStarter procStarter = launcher
             .launch()
@@ -690,17 +699,17 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             .stderr( listener.getLogger() )
             .stdout( listener.getLogger() );
         int status = procStarter.join();
-        
+
         if( status != 0 ){
             return false;
         }
-        
+
         return true;
     }
-    
-    
-    
-    private boolean generateChanges( FilePath workspace, Launcher launcher, TaskListener listener, 
+
+
+
+    private boolean generateChanges( FilePath workspace, Launcher launcher, TaskListener listener,
             String packageName, String packageVersion ) throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = launcher
             .launch()
@@ -711,17 +720,17 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         int status;
         Proc proc  = procStarter.start();
         status = proc.join();
-        
+
         if( status != 0 ){
             return false;
         }
-        
+
         if( workspace == null ){
             return false;
         }
-        
+
         try( Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-            Writer w = new OutputStreamWriter( workspace.child( packageName + "_" + packageVersion ).write(), 
+            Writer w = new OutputStreamWriter( workspace.child( packageName + "_" + packageVersion ).write(),
                 "UTF-8" );
                 ){
             while( scan.hasNextLine() ){
@@ -729,10 +738,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 w.write( System.lineSeparator() );
             }
         }
-        
+
         return true;
     }
-    
+
     private String getStdoutOfProcess( FilePath workspace, Launcher launcher, TaskListener listener, String ... args )
         throws IOException, InterruptedException {
         StringBuilder toRet = new StringBuilder();
@@ -745,61 +754,61 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         Proc proc = null;
         proc = procStarter.start();
         status = proc.join();
-        
+
         if( status != 0 ){
             return null;
         }
-        
+
         Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
         while( scan.hasNextLine() ){
             toRet.append( scan.nextLine() );
         }
-        
+
         return toRet.toString();
     }
-    
+
     private boolean isUbuntu( FilePath workspace, Launcher launcher, TaskListener listener ) throws IOException, InterruptedException {
         String output = getStdoutOfProcess( workspace, launcher, listener, "lsb_release", "--id" );
-        
+
         if( output.indexOf( "Ubuntu" ) >= 0 ){
             return true;
         }else{
             return false;
         }
     }
-    
+
     private boolean checkIfBuildingTag( EnvVars envVars ){
         if( buildAsTag ){
             return true;
         }
-        
+
         if( envVars.containsKey( "SVN_URL_1" ) ){
             if( envVars.get( "SVN_URL_1" ).indexOf( "tags/" ) >= 0 ){
                 return true;
             }
         }
-        
+
         if( envVars.containsKey( "GIT_BRANCH" ) ){
             if( envVars.get( "GIT_BRANCH" ).indexOf( "tags/" ) >= 0 ){
                 return true;
             }
         }
-        
+
         if( envVars.containsKey( "DEB_PBUILDER_BUILDING_TAG" ) ){
             return Boolean.parseBoolean( envVars.get( "DEB_BUILDER_BUILDING_TAG" ) );
         }
-        
+
         return false;
     }
-    
-//    private String getArchitecture( Run<?,?> build, TaskListener listener ) 
+
+//    private String getArchitecture( Run<?,?> build, TaskListener listener )
 //            throws InterruptedException, IOException {
 //        if( build instanceof AbstractBuild ){
 //            EnvVars env = build.getEnvironment( listener );
 //            env.overrideAll( ((AbstractBuild)build).getBuildVariables() );
 //            return env.expand( "architecture" );
 //        }else{
-//            return 
+//            return
 //        }
 //    }
 
@@ -818,7 +827,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     @Symbol( "debianPbuilder" )
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        
+
         private String jenkinsEmail;
         private String packageVersionFormat;
         private String defaultDebianDirLocation;
@@ -830,7 +839,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
             }
         }
-        
+
         /**
          * Performs on-the-fly validation of the form field 'name'.
          *
@@ -843,7 +852,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 throws IOException, ServletException {
             return FormValidation.ok();
         }
-        
+
         public FormValidation doCheckNumberCores(@QueryParameter String value ){
             int i;
             try{
@@ -851,20 +860,20 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             }catch( NumberFormatException ex ){
                 return FormValidation.error( "That is not a valid number" );
             }
-            
+
             if( i == 0 ){
                 return FormValidation.error( "Number of cores cannot be 0" );
             }
-            
+
             if( i < 0 && i != -1 ){
                 return FormValidation.error( "Use -1 to use all available cores" );
             }
-            
+
             return FormValidation.ok();
         }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // Indicates that this builder can be used with all kinds of project types 
+            // Indicates that this builder can be used with all kinds of project types
             return true;
         }
 
@@ -881,60 +890,60 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             packageVersionFormat = formData.getString( "packageVersionFormat" );
             defaultDebianDirLocation = formData.getString( "defaultDebianDirLocation" );
             try{
-                dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( 
+                dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf(
                     formData.getString( "defaultDependsResolver" ) ).name();
             }catch( IllegalArgumentException ex ){
                 dependsResolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
             }
-            
+
             save();
             return super.configure(req,formData);
         }
-        
+
         public String getJenkinsEmail(){
             return jenkinsEmail;
         }
-        
+
         public String getPackageVersionFormat(){
             if( packageVersionFormat == null || packageVersionFormat.length() == 0 ){
                 return defaultPackageVersionFormat();
             }
-            
+
             return packageVersionFormat;
         }
-        
+
         public String defaultPackageVersionFormat(){
             return "YYYYMMddHHmmss.%rev%.%build%";
         }
-        
+
         public String getDefaultDebianDirLocation(){
             if( defaultDebianDirLocation == null || defaultDebianDirLocation.length() == 0 ){
                 return defaultDebDirLocation();
             }
-            
+
             return defaultDebianDirLocation;
         }
-        
+
         public String defaultDebDirLocation(){
             return "source";
         }
-        
+
         public String getDefaultDependsResolver(){
             if( dependsResolver == null || dependsResolver.length() == 0 ){
                 return PbuilderConfiguration.SatisfyDependsResolver.DEFAULT.name();
             }
             return dependsResolver;
         }
-        
+
         PbuilderConfiguration.SatisfyDependsResolver getDependsResolverEnum(){
             PbuilderConfiguration.SatisfyDependsResolver resolver;
-            
+
             try{
                 resolver = PbuilderConfiguration.SatisfyDependsResolver.valueOf( getDefaultDependsResolver() );
             }catch( IllegalArgumentException ex ){
                 resolver = PbuilderConfiguration.SatisfyDependsResolver.DEFAULT;
             }
-            
+
             return resolver;
         }
     }
