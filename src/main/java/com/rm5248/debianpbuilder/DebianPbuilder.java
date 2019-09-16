@@ -711,6 +711,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
     private boolean generateChanges( FilePath workspace, Launcher launcher, TaskListener listener,
             String packageName, String packageVersion ) throws IOException, InterruptedException {
+        if( workspace == null ){
+            return false;
+        }
+
         Launcher.ProcStarter procStarter = launcher
             .launch()
             .pwd( workspace.child( getDebianDirLocation() ) )
@@ -722,10 +726,6 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         status = proc.join();
 
         if( status != 0 ){
-            return false;
-        }
-
-        if( workspace == null ){
             return false;
         }
 
