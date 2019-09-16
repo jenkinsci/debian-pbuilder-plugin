@@ -719,8 +719,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             .launch()
             .pwd( workspace.child( getDebianDirLocation() ) )
             .cmds( "dpkg-genchanges", "-u.." )
-            .stderr( listener.getLogger() )
-            .stdout( listener.getLogger() );
+            .readStdout();
         int status;
         Proc proc  = procStarter.start();
         status = proc.join();
