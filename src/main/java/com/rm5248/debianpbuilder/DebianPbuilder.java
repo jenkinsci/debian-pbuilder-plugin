@@ -713,8 +713,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             String packageName, String packageVersion ) throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( workspace )
-            .cmds( "dpkg-genchanges", "-u.", getDebianDirLocation() )
+            .pwd( workspace.child( getDebianDirLocation() ) )
+            .cmds( "dpkg-genchanges", "-u.." )
             .stderr( listener.getLogger() )
             .stdout( listener.getLogger() );
         int status;
