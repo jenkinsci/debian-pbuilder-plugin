@@ -711,21 +711,20 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
     private boolean generateChanges( FilePath workspace, Launcher launcher, TaskListener listener,
             String packageName, String packageVersion ) throws IOException, InterruptedException {
+        if( workspace == null ){
+            return false;
+        }
+
         Launcher.ProcStarter procStarter = launcher
             .launch()
-            .pwd( workspace )
-            .cmds( "dpkg-genchanges", "-u.", getDebianDirLocation() )
-            .stderr( listener.getLogger() )
-            .stdout( listener.getLogger() );
+            .pwd( workspace.child( getDebianDirLocation() ) )
+            .cmds( "dpkg-genchanges", "-u.." )
+            .readStdout();
         int status;
         Proc proc  = procStarter.start();
         status = proc.join();
 
         if( status != 0 ){
-            return false;
-        }
-
-        if( workspace == null ){
             return false;
         }
 
