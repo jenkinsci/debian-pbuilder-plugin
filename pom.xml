@@ -15,7 +15,7 @@
 
     <groupId>com.rm5248</groupId>
     <artifactId>debian-pbuilder</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <version>1.7</version>
     <packaging>hpi</packaging>
     <url>https://wiki.jenkins.io/display/JENKINS/Debian+Pbuilder+Plugin</url>
 
@@ -80,7 +80,7 @@
         <url>https://github.com/jenkinsci/debian-pbuilder-plugin</url>
         <connection>scm:git:https://github.com/jenkinsci/debian-pbuilder-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/debian-pbuilder-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>debian-pbuilder-1.7</tag>
     </scm>
     
     <issueManagement>
