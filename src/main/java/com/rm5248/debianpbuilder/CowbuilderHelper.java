@@ -12,10 +12,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.io.Writer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -85,7 +87,35 @@ class CowbuilderHelper {
     }
 
     public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException {
-        return (Boolean)m_launcher.getChannel().call( new UpdateLocker() );
+//        FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
+//        int times = 0;
+
+        // TODO need to lock file on remote filesystem, but how to do in a reliable manner?
+        // Callable?  Or can we use the LockableResources plugin?
+//        do{
+//            try( FileLock lock = fc.tryLock() ){
+//                if( m_workspace == null ){
+//                    return false;
+//                }
+
+                boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
+
+                if( !baseExists ){
+                    return createCowbuilderBase();
+                }else{
+                    return updateCowbuilderBase();
+                }
+//            }catch( OverlappingFileLockException ex ){
+//                LOGGER.fine( "Unable to get lock, will try again.  Reason: " + ex.getMessage() );
+//            }
+//
+//            try{
+//                LOGGER.fine( "Unable to acquire lock, sleeping for 10 seconds..." );
+//                Thread.sleep( 10000 );
+//            }catch( InterruptedException ex ){}
+//        }while( ++times < 10 );
+//
+//        return false;
     }
 
     private boolean createCowbuilderBase() throws IOException, InterruptedException {
@@ -180,8 +210,11 @@ class CowbuilderHelper {
             return;
         }
 
-        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
-        m_dpkgArch = scan.nextLine();
+        InputStream is = proc.getStdout();
+        if( is != null ){
+            Scanner scan = new Scanner( is, "UTF-8" );
+            m_dpkgArch = scan.nextLine();
+        }
     }
 
     /**
@@ -323,38 +356,4 @@ class CowbuilderHelper {
         }
     }
 
-    private class UpdateLocker<Boolean, IOException> extends MasterToSlaveCallable{
-
-        @Override
-        public Boolean call() throws Throwable {
-            FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
-            int times = 0;
-
-            do{
-                try( FileLock lock = fc.tryLock() ){
-                    if( lock == null || m_workspace == null ){
-                        return new Boolean( false );
-                    }
-
-                    boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
-
-                    if( !baseExists ){
-                        return new Boolean( createCowbuilderBase() );
-                    }else{
-                        return new Boolean( updateCowbuilderBase() );
-                    }
-                }catch( OverlappingFileLockException ex ){
-                    LOGGER.fine( "Unable to get lock, will try again.  Reason: " + ex.getMessage() );
-                }
-
-                try{
-                    LOGGER.fine( "Unable to acquire lock, sleeping for 10 seconds..." );
-                    Thread.sleep( 10000 );
-                }catch( InterruptedException ex ){}
-            }while( ++times < 10 );
-
-            return new Boolean( false );
-        }
-
-    }
 }

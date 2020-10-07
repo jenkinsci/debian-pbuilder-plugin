@@ -27,6 +27,7 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.format.DateTimeFormatter;
@@ -560,7 +561,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         Proc proc = procStarter.start();
         proc.join();
 
-        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+        InputStream is = proc.getStdout();
+        if( is == null ){
+            listener.getLogger().println( "Internal error: Can't read from subprocess" );
+            return false;
+        }
+
+        Scanner scan = new Scanner( is, "UTF-8" );
 
         String line = scan.nextLine();
 
@@ -624,7 +631,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return null;
         }
 
-        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+        InputStream is = proc.getStdout();
+        if( is == null ){
+            listener.getLogger().println( "Internal error: Can't read from subprocess" );
+            return null;
+        }
+
+        Scanner scan = new Scanner( is, "UTF-8" );
 
         return scan.nextLine();
     }
@@ -682,7 +695,12 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 .readStdout();
             Proc proc = procStarter.start();
             proc.join();
-            Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+            InputStream is = proc.getStdout();
+            if( is == null ){
+                launcher.getListener().getLogger().println( "Internal error: Can't read from subprocess" );
+                return email;
+            }
+            Scanner scan = new Scanner( is, "UTF-8" );
 
             return "jenkins@" + scan.nextLine();
         }
@@ -728,7 +746,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
 
-        try( Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+        InputStream is = proc.getStdout();
+        if( is == null ){
+            listener.getLogger().println( "Internal error: Can't read from subprocess" );
+            return false;
+        }
+
+        try( Scanner scan = new Scanner( is, "UTF-8" );
             Writer w = new OutputStreamWriter( workspace.child( packageName + "_" + packageVersion ).write(),
                 "UTF-8" );
                 ){
@@ -758,7 +782,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return null;
         }
 
-        Scanner scan = new Scanner( proc.getStdout(), "UTF-8" );
+        InputStream is = proc.getStdout();
+        if( is == null ){
+            listener.getLogger().println( "Internal error: Can't read from subprocess" );
+            return null;
+        }
+
+        Scanner scan = new Scanner( is, "UTF-8" );
         while( scan.hasNextLine() ){
             toRet.append( scan.nextLine() );
         }
