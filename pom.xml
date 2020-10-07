@@ -1,16 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-  
+
     <properties>
-        <jenkins.version>2.0</jenkins.version>
+        <jenkins.version>2.204.6</jenkins.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <java.level>8</java.level>
     </properties>
-  
+
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.29</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>4.3</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
     <groupId>com.rm5248</groupId>
@@ -36,7 +37,7 @@
             <url>https://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-  
+
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -51,7 +52,7 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
-  
+
     <!-- This plugin requires at least java 8, -->
     <!-- but what we pull in from our parent POM only checks to java 7 -->
     <build>
@@ -75,18 +76,18 @@
             <name>MIT</name>
         </license>
     </licenses>
-    
+
     <scm>
         <url>https://github.com/jenkinsci/debian-pbuilder-plugin</url>
         <connection>scm:git:https://github.com/jenkinsci/debian-pbuilder-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/debian-pbuilder-plugin.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
-    
+
     <issueManagement>
         <url />
     </issueManagement>
-    
+
     <developers>
         <developer>
             <email>robert.middleton@rm5248.com</email>
@@ -98,7 +99,7 @@
             </roles>
         </developer>
     </developers>
-    
+
     <reporting>
         <plugins>
             <plugin>
