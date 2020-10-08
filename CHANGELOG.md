@@ -1,5 +1,11 @@
 # Changelog
 
+##### Version 1.8(2020-10-07)
+
+-   Use flock for file locking instead of within Java.  This fixes an issue where
+    locks were only held on master and not on the actual slave doing the building.
+    This causes issues if master is not Debian-based(e.g. CentOS)
+
 ##### Version 1.7(2019-10-12)
 
 -   Fixed a few minor issues with building from pipeline [PR #3](https://github.com/jenkinsci/debian-pbuilder-plugin/pull/3)
