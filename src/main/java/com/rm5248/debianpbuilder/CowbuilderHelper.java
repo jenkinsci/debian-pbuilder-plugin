@@ -5,32 +5,21 @@ import hudson.FilePath.FileCallable;
 import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
-import hudson.model.AbstractBuild;
-import hudson.remoting.Callable;
 import hudson.remoting.VirtualChannel;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.RandomAccessFile;
-import java.io.Serializable;
 import java.io.Writer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Scanner;
 import java.util.logging.Logger;
-import jenkins.security.MasterToSlaveCallable;
 import org.jenkinsci.remoting.RoleChecker;
 
 /**
@@ -87,35 +76,22 @@ class CowbuilderHelper {
     }
 
     public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException {
-//        FileChannel fc = new RandomAccessFile( m_updateLockfile, "rw" ).getChannel();
-//        int times = 0;
+        boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
 
-        // TODO need to lock file on remote filesystem, but how to do in a reliable manner?
-        // Callable?  Or can we use the LockableResources plugin?
-//        do{
-//            try( FileLock lock = fc.tryLock() ){
-//                if( m_workspace == null ){
-//                    return false;
-//                }
-
-                boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
-
-                if( !baseExists ){
-                    return createCowbuilderBase();
-                }else{
-                    return updateCowbuilderBase();
-                }
-//            }catch( OverlappingFileLockException ex ){
-//                LOGGER.fine( "Unable to get lock, will try again.  Reason: " + ex.getMessage() );
-//            }
-//
-//            try{
-//                LOGGER.fine( "Unable to acquire lock, sleeping for 10 seconds..." );
-//                Thread.sleep( 10000 );
-//            }catch( InterruptedException ex ){}
-//        }while( ++times < 10 );
-//
-//        return false;
+        // Note: because this is not by any means an atomic operation, this could fail
+        // in the event that:
+        // 1. No base exists and two jobs start at the same time, in which case
+        //    the first one will succeed and the second one will fail
+        // Since the above only has to happen once, this is unlikely to cause
+        // issues that we really care about.
+        // Multiple updates should be fine, as one must finish before another
+        // one can do the update, and the COW functionality means it shouldn't
+        // cause an issue(?)
+        if( !baseExists ){
+            return createCowbuilderBase();
+        }else{
+            return updateCowbuilderBase();
+        }
     }
 
     private boolean createCowbuilderBase() throws IOException, InterruptedException {
@@ -123,7 +99,10 @@ class CowbuilderHelper {
             .launch()
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
-            .cmds( "sudo",
+            .cmds( "flock",
+                    "-n",
+                    m_updateLockfile,
+                    "sudo",
                     "cowbuilder",
                     "--create",
                     "--basepath",
@@ -159,7 +138,10 @@ class CowbuilderHelper {
             .launch()
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
-            .cmds( "sudo",
+            .cmds( "flock",
+                    "-n",
+                    m_updateLockfile,
+                    "sudo",
                     "cowbuilder",
                     "--update",
                     "--basepath",
