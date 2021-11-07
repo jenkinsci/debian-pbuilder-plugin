@@ -9,7 +9,7 @@
     <f:entry title="Mirror Site" field="mirrorSite">
         <f:textbox/>
     </f:entry>
-    
+
     <f:advanced>
         <f:entry title="Build as tag" field="buildAsTag">
             <f:checkbox/>
@@ -34,6 +34,12 @@
         </f:entry>
         <f:entry title="Pristine tar file name" field="pristineTarName">
             <f:textbox />
+        </f:entry>
+        <f:entry title="Other mirror" field="otherMirror">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="Extra Packages" field="extraPackages">
+            <f:textbox/>
         </f:entry>
     </f:advanced>
 </j:jelly>

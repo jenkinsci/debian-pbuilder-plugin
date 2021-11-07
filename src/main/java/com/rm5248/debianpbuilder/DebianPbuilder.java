@@ -68,6 +68,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String m_components;
     private boolean m_guessComponents;
     private String m_pristineTarName;
+    private String m_otherMirror;
+    private String m_extraPackages;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -186,6 +188,16 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         m_pristineTarName = pristinetarName;
     }
 
+    @DataBoundSetter
+    public void setOtherMirror( String otherMirror ){
+        m_otherMirror = otherMirror;
+    }
+
+    @DataBoundSetter
+    public void setExtraPackages( String extraPackages ){
+        m_extraPackages = extraPackages;
+    }
+
     public int getNumberCores(){
         return numberCores;
     }
@@ -243,6 +255,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
     public String getPristineTarName(){
         return m_pristineTarName;
+    }
+
+    public String getOtherMirror(){
+        return m_otherMirror;
+    }
+
+    public String getExtraPackages(){
+        return m_extraPackages;
     }
 
     @Override
@@ -445,6 +465,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
         pbuildConfig.setSatisfyDependsCommand( getDescriptor().getDependsResolverEnum() );
+        pbuildConfig.setOtherMirror( m_otherMirror );
+        pbuildConfig.setExtraPackages( m_extraPackages );
 
         //Now that we have our sources, run debootstrap
         cowHelp = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
