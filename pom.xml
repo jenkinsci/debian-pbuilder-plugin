@@ -16,7 +16,7 @@
 
     <groupId>com.rm5248</groupId>
     <artifactId>debian-pbuilder</artifactId>
-    <version>1.10-SNAPSHOT</version>
+    <version>1.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/debian-pbuilder-plugin</url>
 
