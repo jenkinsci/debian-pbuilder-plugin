@@ -1,5 +1,9 @@
 # Changelog
 
+##### Version 1.9(2022-04-06)
+
+-  Added settings for OTHERMIRROR and EXTRAPACKAGES
+
 ##### Version 1.8(2020-10-07)
 
 -   Use flock for file locking instead of within Java.  This fixes an issue where
