@@ -524,6 +524,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                     dscFile,
                     packageName,
                     distribution,
+                    architecture,
                     m_artifactoryRepoName);
         }
 
@@ -606,7 +607,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
             return env.get( "architecture" );
         }else{
-            if( m_architecture == null ||
+            if( architecture == null ||
                     architecture.length() == 0 ){
                 architecture = getStdoutOfProcess(workspace, launcher, listener,
                             "dpkg-architecture",
@@ -904,12 +905,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             FilePath dscFile,
             String sourceName,
             String distribution,
+            String architecture,
             String repoName) throws IOException, InterruptedException{
         String specFileContents = "{\"files\":["
                 + "{"
                 + "\"pattern\":\"" + binariesLocation.getName() + "/*.deb\""
                 + "\"target\":\"" + repoName + "/pool/" + sourceName + "\""
-                + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;deb.architecture=" + getArchitecture() + "\""
+                + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;deb.architecture=" + architecture + "\""
                 + "},"
                 + "{"
                 + "\"pattern\":\"" + binariesLocation.getName() + "/*.tar*\""
