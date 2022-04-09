@@ -70,6 +70,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String m_pristineTarName;
     private String m_otherMirror;
     private String m_extraPackages;
+    private boolean m_generateArtifactorySpecFile;
+    private String m_artifactoryRepoName;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -116,6 +118,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     @DataBoundConstructor
     public DebianPbuilder(){
         m_numberCores = 1;
+        m_generateArtifactorySpecFile = false;
     }
 
     @Deprecated
@@ -198,6 +201,16 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         m_extraPackages = extraPackages;
     }
 
+    @DataBoundSetter
+    public void setGenerateArtifactorySpecFile( boolean generateSpec ){
+        m_generateArtifactorySpecFile = generateSpec;
+    }
+
+    @DataBoundSetter
+    public void setArtifactoryRepoName( String repoName ){
+        m_artifactoryRepoName = repoName;
+    }
+
     public int getNumberCores(){
         return m_numberCores;
     }
@@ -263,6 +276,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
     public String getExtraPackages(){
         return m_extraPackages;
+    }
+
+    public boolean getGenerateArtifactorySpecFile(){
+        return m_generateArtifactorySpecFile;
+    }
+
+    public String getArtifactoryRepoName(){
+        return m_artifactoryRepoName;
     }
 
     @Override
@@ -334,7 +355,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         architecture = getActualArchitecture( workspace, launcher, build, listener );
         if( architecture != null && architecture.length() == 0 ){
             listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
-            architecture = null;
+            architecture = getStdoutOfProcess(workspace, launcher, listener,
+                            "dpkg-architecture",
+                            "--query",
+                            "DEB_TARGET_ARCH" );
         }
 
         if( getDebianDirLocation().equals( "." ) ){
@@ -491,6 +515,18 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         BuildListenerAdapter bl = new BuildListenerAdapter( listener );
         build.pickArtifactManager().archive( binariesLocation, launcher, bl, files );
 
+        if( m_generateArtifactorySpecFile &&
+                m_artifactoryRepoName != null &&
+                m_artifactoryRepoName.length() > 1 ){
+            writeArtifactorySpecFile(
+                    workspace,
+                    binariesLocation,
+                    dscFile,
+                    packageName,
+                    distribution,
+                    m_artifactoryRepoName);
+        }
+
         return true;
     }
 
@@ -570,6 +606,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
             return env.get( "architecture" );
         }else{
+            if( m_architecture == null ||
+                    m_architecture.length() == 0 ){
+                m_architecture = getStdoutOfProcess(workspace, launcher, listener,
+                            "dpkg-architecture",
+                            "--query",
+                            "DEB_TARGET_ARCH" );
+            }
+
             return m_architecture;
         }
     }
@@ -853,6 +897,37 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
         return false;
+    }
+
+    private void writeArtifactorySpecFile(FilePath workspace,
+            FilePath binariesLocation,
+            FilePath dscFile,
+            String sourceName,
+            String distribution,
+            String repoName) throws IOException, InterruptedException{
+        String specFileContents = "{\"files\":["
+                + "{"
+                + "\"pattern\":\"" + binariesLocation.getName() + "/*.deb\""
+                + "\"target\":\"" + repoName + "/pool/" + sourceName + "\""
+                + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;deb.architecture=" + getArchitecture() + "\""
+                + "},"
+                + "{"
+                + "\"pattern\":\"" + binariesLocation.getName() + "/*.tar*\""
+                + "\"target\":\"" + repoName + "/pool/" + sourceName + "\""
+                + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;\""
+                + "},"
+                + "{"
+                + "\"pattern\":\"" + binariesLocation.getName() + "/*.dsc\""
+                + "\"target\":\"" + repoName + "/pool/" + sourceName + "\""
+                + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;\""
+                + "}"
+                + "]}";
+
+        FilePath artifactorySpecDir = workspace.child("artifactory-spec-debian-pbuilder");
+        artifactorySpecDir.mkdirs();
+
+        FilePath specFile = artifactorySpecDir.child( "debian-pbuilder.spec" );
+        specFile.write(specFileContents, null);
     }
 
 //    private String getArchitecture( Run<?,?> build, TaskListener listener )
