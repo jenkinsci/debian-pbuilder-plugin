@@ -144,6 +144,8 @@ class CowbuilderHelper {
                     "sudo",
                     "cowbuilder",
                     "--update",
+                    "--distribution",
+                    m_distribution,
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--configfile",
@@ -267,6 +269,8 @@ class CowbuilderHelper {
             .envs( getDistArchEnv() )
             .cmds( "sudo",
                     "cowbuilder",
+                    "--distribution",
+                    m_distribution,
                     "--buildresult",
                     outputDir,
                     "--build",
