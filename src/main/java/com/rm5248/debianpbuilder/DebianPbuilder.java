@@ -331,7 +331,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
 
-        architecture = getActualArchitecture( build, listener );
+        architecture = getActualArchitecture( workspace, launcher, build, listener );
         if( architecture != null && architecture.length() == 0 ){
             listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
             architecture = null;
@@ -548,7 +548,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return "/usr/share/keyrings/debian-archive-keyring.gpg";
     }
 
-    private String getActualArchitecture( Run<?,?> build, TaskListener listener )
+    private String getActualArchitecture( FilePath workspace, Launcher launcher, Run<?,?> build, TaskListener listener )
             throws InterruptedException, IOException {
         if( build instanceof AbstractBuild ){
             EnvVars env = build.getEnvironment( listener );
@@ -561,7 +561,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 }else{
                     listener.getLogger().println( "No architecture found, using " +
                             "dpkg default" );
-                    return null;
+                    return getStdoutOfProcess(workspace, launcher, listener,
+                            "dpkg-architecture",
+                            "--query",
+                            "DEB_TARGET_ARCH" );
                 }
             }
 
