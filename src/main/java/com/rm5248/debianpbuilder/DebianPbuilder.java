@@ -57,14 +57,14 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
-    private int m_numberCores;
-    private String m_distribution;
-    private String m_mirrorSite;
-    private boolean m_buildAsTag;
-    private String m_additionalBuildResults;
-    private String m_architecture;
-    private String m_debianDirLocation;
-    private String m_keyring;
+    private int numberCores;
+    private String distribution;
+    private String mirrorSite;
+    private boolean buildAsTag;
+    private String additionalBuildResults;
+    private String architecture;
+    private String debianDirLocation;
+    private String keyring;
     private String m_components;
     private boolean m_guessComponents;
     private String m_pristineTarName;
@@ -117,7 +117,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
     @DataBoundConstructor
     public DebianPbuilder(){
-        m_numberCores = 1;
+        numberCores = 1;
         m_generateArtifactorySpecFile = false;
     }
 
@@ -128,52 +128,52 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             boolean buildAsTag,
             String additionalBuildResults,
             String architecture) {
-        this.m_numberCores = numberCores;
-        this.m_distribution = distribution;
-        this.m_mirrorSite = mirrorSite;
-        this.m_buildAsTag = buildAsTag;
-        this.m_additionalBuildResults = additionalBuildResults;
-        this.m_architecture = architecture;
+        this.numberCores = numberCores;
+        this.distribution = distribution;
+        this.mirrorSite = mirrorSite;
+        this.buildAsTag = buildAsTag;
+        this.additionalBuildResults = additionalBuildResults;
+        this.architecture = architecture;
     }
 
     @DataBoundSetter
     public void setNumberCores( int cores ){
-        m_numberCores = cores;
+        numberCores = cores;
     }
 
     @DataBoundSetter
     public void setDistribution( String distribution ){
-        this.m_distribution  = distribution;
+        this.distribution  = distribution;
     }
 
     @DataBoundSetter
     public void setMirrorSite( String mirrorSite ){
-        this.m_mirrorSite = mirrorSite;
+        this.mirrorSite = mirrorSite;
     }
 
     @DataBoundSetter
     public void setBuildAsTag( boolean buildAsTag ){
-        this.m_buildAsTag = buildAsTag;
+        this.buildAsTag = buildAsTag;
     }
 
     @DataBoundSetter
     public void setAdditionalBuildResults( String additionalBuildResults ){
-        this.m_additionalBuildResults = additionalBuildResults;
+        this.additionalBuildResults = additionalBuildResults;
     }
 
     @DataBoundSetter
     public void setArchitecture( String architecture ){
-        this.m_architecture = architecture;
+        this.architecture = architecture;
     }
 
     @DataBoundSetter
     public void setDebianDirLocation( String debianDirLocation ){
-        this.m_debianDirLocation = debianDirLocation;
+        this.debianDirLocation = debianDirLocation;
     }
 
     @DataBoundSetter
     public void setKeyring( String keyring ){
-        this.m_keyring = keyring;
+        this.keyring = keyring;
     }
 
     @DataBoundSetter
@@ -212,50 +212,50 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     public int getNumberCores(){
-        return m_numberCores;
+        return numberCores;
     }
 
     public String getDistribution(){
-        return m_distribution;
+        return distribution;
     }
 
     public String getMirrorSite(){
-        return m_mirrorSite;
+        return mirrorSite;
     }
 
     public boolean getBuildAsTag(){
-        return m_buildAsTag;
+        return buildAsTag;
     }
 
     public String getAdditionalBuildResults(){
-        return m_additionalBuildResults;
+        return additionalBuildResults;
     }
 
     public String getArchitecture(){
-        return m_architecture;
+        return architecture;
     }
 
     public String getDebianDirLocation(){
-        if( this.m_debianDirLocation == null ||
-           this.m_debianDirLocation.length() == 0 ){
+        if( this.debianDirLocation == null ||
+           this.debianDirLocation.length() == 0 ){
             return getDescriptor().getDefaultDebianDirLocation();
         }
 
-        return m_debianDirLocation;
+        return debianDirLocation;
     }
 
     public String getKeyring(){
-        return m_keyring;
+        return keyring;
     }
 
     public boolean isDebianDistribution(){
         Arrays.sort( DEBIAN_DISTRIBUTIONS );
-        return Arrays.binarySearch(DEBIAN_DISTRIBUTIONS, m_distribution ) >= 0 ;
+        return Arrays.binarySearch( DEBIAN_DISTRIBUTIONS, distribution ) >= 0 ;
     }
 
     public boolean isUbuntuDistribution(){
         Arrays.sort( UBUNTU_DISTRIBUTIONS );
-        return Arrays.binarySearch(UBUNTU_DISTRIBUTIONS, m_distribution ) >= 0 ;
+        return Arrays.binarySearch( UBUNTU_DISTRIBUTIONS, distribution ) >= 0 ;
     }
 
     public String getComponents(){
@@ -445,13 +445,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
         //user provided a distribution, override automatic settings
-        if( this.m_distribution != null && this.m_distribution.length() > 0 ){
-            distribution = this.m_distribution;
+        if( this.distribution != null && this.distribution.length() > 0 ){
+            distribution = this.distribution;
         }
 
         pbuildConfig.setNetwork( true );
-        if( m_additionalBuildResults != null && m_additionalBuildResults.length() > 0 ){
-            pbuildConfig.setAdditionalBuildResults(m_additionalBuildResults.split( "," ) );
+        if( additionalBuildResults != null && additionalBuildResults.length() > 0 ){
+            pbuildConfig.setAdditionalBuildResults( additionalBuildResults.split( "," ) );
         }
 
         boolean ubuntuOnDebian = false;
@@ -484,8 +484,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
 
-        if( m_mirrorSite != null && m_mirrorSite.length() > 0 ){
-            pbuildConfig.setMirrorSite(m_mirrorSite );
+        if( mirrorSite != null && mirrorSite.length() > 0 ){
+            pbuildConfig.setMirrorSite( mirrorSite );
         }
 
         pbuildConfig.setSatisfyDependsCommand( getDescriptor().getDependsResolverEnum() );
@@ -502,7 +502,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
 
-        if( !cowHelp.buildInEnvironment(binariesLocation, dscFile, m_numberCores ) ){
+        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
             return false;
         }
 
@@ -590,10 +590,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             EnvVars env = build.getEnvironment( listener );
 
             if( !env.containsKey( "architecture" ) ){
-                if( m_architecture != null && m_architecture.length() > 0 ){
+                if( architecture != null && architecture.length() > 0 ){
                     listener.getLogger().println( "No architecture variable in environment"
                             + " found, using parameter instead." );
-                    return m_architecture;
+                    return architecture;
                 }else{
                     listener.getLogger().println( "No architecture found, using " +
                             "dpkg default" );
@@ -607,14 +607,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return env.get( "architecture" );
         }else{
             if( m_architecture == null ||
-                    m_architecture.length() == 0 ){
-                m_architecture = getStdoutOfProcess(workspace, launcher, listener,
+                    architecture.length() == 0 ){
+                architecture = getStdoutOfProcess(workspace, launcher, listener,
                             "dpkg-architecture",
                             "--query",
                             "DEB_TARGET_ARCH" );
             }
 
-            return m_architecture;
+            return architecture;
         }
     }
 
@@ -876,7 +876,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     private boolean checkIfBuildingTag( EnvVars envVars ){
-        if( m_buildAsTag ){
+        if( buildAsTag ){
             return true;
         }
 
