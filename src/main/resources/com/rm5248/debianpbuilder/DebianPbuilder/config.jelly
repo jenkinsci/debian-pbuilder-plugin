@@ -47,10 +47,10 @@
         <f:entry title="Artifactory repo name" field="artifactoryRepoName">
             <f:textbox/>
         </f:entry>
-        <f:entry title="PBuilder implementation" field="pBuilderType">
-            <select name="pBuilderType">
-                <option value="Cowbuilder" selected="${instance.pBuilderType.equals('Cowbuilder')? 'true':'false'}">Cowbuilder</option>
-                <option value="PBuilder" selected="${instance.pBuilderType.equals('PBuilder')? 'true':'false'}">PBuilder</option>
+        <f:entry title="PBuilder implementation" field="pbuilderType">
+            <select name="pbuilderType">
+                <option value="Cowbuilder" selected="${instance.pbuilderType.equals('Cowbuilder')? 'true':'false'}">Cowbuilder</option>
+                <option value="PBuilder" selected="${instance.pbuilderType.equals('PBuilder')? 'true':'false'}">PBuilder</option>
             </select>
         </f:entry>
     </f:advanced>

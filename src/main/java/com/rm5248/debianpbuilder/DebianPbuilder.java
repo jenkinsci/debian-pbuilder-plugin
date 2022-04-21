@@ -220,9 +220,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setpBuilderType( String pbuilderType ){
+    public void setPbuilderType( String pbuilderType ){
         LOGGER.fine("Setting pbuilder type to " + pbuilderType );
-        m_pbuilderType = PbuilderType.valueOf( pbuilderType );
+        try{
+            m_pbuilderType = PbuilderType.valueOf( pbuilderType );
+        }catch( Exception ex ){
+            m_pbuilderType = PbuilderType.Cowbuilder;
+        }
     }
 
     public int getNumberCores(){
@@ -300,7 +304,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return m_artifactoryRepoName;
     }
 
-    public String getpBuilderType(){
+    public String getPbuilderType(){
+        if( m_pbuilderType == null ){
+            LOGGER.fine("PBuilder type null, defaulting to cowbuilder" );
+            return PbuilderType.Cowbuilder.toString();
+        }
         LOGGER.fine("Gettting pbuilder type of " + m_pbuilderType.toString() );
         return m_pbuilderType.toString();
     }
