@@ -1,5 +1,10 @@
 # Changelog
 
+##### Version 1.10(TBD)
+
+- Added ability to switch between using cowbuilder and using pbuilder
+- Added ability to generate a spec file for use with Artifactory
+
 ##### Version 1.9(2022-04-06)
 
 -  Added settings for OTHERMIRROR and EXTRAPACKAGES

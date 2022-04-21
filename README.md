@@ -212,6 +212,10 @@ Cowbuilder.  When cross-compiling, the rootfs will be your native architecture,
 and a cross-compiler will be used to compile the code.  This depends on any
 dependent packages being multiarch capable.
 
+With multiarch-compatible packages, this means that any dependent packages
+that get installed into the rootfs must install pkgconfig files into
+/usr/lib/<triplet>/pkgconfig for example.
+
 ## Issue Tracking
 
 Please file any bugs that you may find on the Jenkins JIRA, using the
