@@ -39,7 +39,7 @@ public class PbuilderHelper extends PbuilderInterface {
             m_architecture = m_dpkgArch;
         }
 
-        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_architecture + ".tgz" );
+        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_dpkgArch + ".tgz" );
 
         String baseLockfile = "/var/run/lock/" + m_distribution + "-" + getArch();
         m_updateLockfile = baseLockfile + ".update";
