@@ -1057,7 +1057,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Debian Pbuilder";
+            return "Build Debian packages in a pbuilder environment";
         }
 
         @Override
