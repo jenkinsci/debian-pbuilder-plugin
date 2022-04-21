@@ -1,0 +1,10 @@
+<p>
+    The PBuilder type selects what backend to use for building.  Cowbuilder
+    implements copy-on-write semantics, but can be very slow when building for
+    a foreign architecture.  PBuilder can be much faster, but relies on
+    installing foreign packages into the chroot, so any packages you install
+    must have multiarch support.
+    <br/>
+    <br/>
+    This will default to using Cowbuilder if not set.
+</p>

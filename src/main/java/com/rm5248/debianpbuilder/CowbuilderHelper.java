@@ -26,20 +26,11 @@ import org.jenkinsci.remoting.RoleChecker;
  *
  * @author robert
  */
-class CowbuilderHelper {
+class CowbuilderHelper extends PbuilderInterface {
     private static final Logger LOGGER = Logger.getLogger( CowbuilderHelper.class.getName() );
 
     private Path m_cowbuilderBase;
-    private String m_architecture;
-    private String m_distribution;
-    private Launcher m_launcher;
-    private String m_dpkgArch;
-    private String m_hookdir;
     private String m_updateLockfile;
-    private PrintStream m_logger;
-    private FilePath m_pbuilderrc;
-    private File m_pbuilderrcAsFile;
-    private FilePath m_workspace;
 
     CowbuilderHelper( FilePath workspace, Launcher launcher, PrintStream logger,
             String architecture, String distribution, String hookdir, PbuilderConfiguration pbuilderConfig ) throws IOException, InterruptedException {
@@ -75,7 +66,8 @@ class CowbuilderHelper {
         m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
     }
 
-    public boolean createOrUpdateCowbuilder() throws IOException, InterruptedException {
+    @Override
+    public boolean createOrUpdateBase() throws IOException, InterruptedException {
         boolean baseExists = m_workspace.act( new CheckIfAbsolutePathExists( m_cowbuilderBase.toFile().getAbsolutePath() ) );
 
         // Note: because this is not by any means an atomic operation, this could fail
@@ -173,61 +165,7 @@ class CowbuilderHelper {
         return newEnv;
     }
 
-    private String getDebootstrap(){
-        if( m_dpkgArch.equals( m_architecture ) ){
-            return "debootstrap";
-        }else{
-            return "qemu-debootstrap";
-        }
-    }
-
-    private void setDpkgArchitecture() throws IOException, InterruptedException {
-         Launcher.ProcStarter procStarter = m_launcher
-            .launch()
-            .cmds( "dpkg", "--print-architecture" )
-            .readStdout();
-        Proc proc = procStarter.start();
-        int status;
-        status = proc.join();
-
-        if( status != 0 ){
-            return;
-        }
-
-        InputStream is = proc.getStdout();
-        if( is != null ){
-            Scanner scan = new Scanner( is, "UTF-8" );
-            m_dpkgArch = scan.nextLine();
-        }
-    }
-
-    /**
-     * Returns the system architecture if 'architecture' is set to 'all',
-     * otherwise get the architecture to build for.
-     *
-     * @return
-     */
-    private String getArch(){
-        if( m_architecture.equals( "all" ) ){
-            return m_dpkgArch;
-        }
-
-        return m_architecture;
-    }
-
-    /**
-     * We *could* resort to JNA here... but what's the fun in that? ;)
-     * @return
-     * @throws IOException
-     */
-    private int getPID() throws IOException {
-        Path link = FileSystems.getDefault().getPath( "/proc/self" );
-
-        Path linked = Files.readSymbolicLink( link );
-
-        return Integer.parseInt( linked.toFile().getName() );
-    }
-
+    @Override
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings( value="NP_LOAD_OF_KNOWN_NULL_VALUE",
                     justification="Does not produce valid output(load of known null at end of try block)" )
     boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
@@ -292,54 +230,6 @@ class CowbuilderHelper {
         }
 
         return true;
-    }
-
-    private static final class PbuilderConfigWriter implements FileCallable<Void>{
-
-        private static final long serialVersionUID = 1L;
-
-        private String m_toWrite;
-
-        public PbuilderConfigWriter( String toWrite ){
-            m_toWrite = toWrite;
-            LOGGER.finer( "Pbuilder config in config writer: " + m_toWrite );
-        }
-
-        @Override
-        public Void invoke( File file, VirtualChannel vc ) throws IOException, InterruptedException {
-            try( Writer w = new OutputStreamWriter( new FileOutputStream( file ), "UTF-8" ) ){
-                w.write(  m_toWrite );
-            }
-
-            return null;
-        }
-
-        @Override
-        public void checkRoles( RoleChecker rc ) throws SecurityException {
-            //throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-        }
-
-    }
-
-    private static final class CheckIfAbsolutePathExists implements FileCallable<Boolean>{
-
-        private final String m_path;
-
-        public CheckIfAbsolutePathExists( String path ){
-            m_path = path;
-        }
-
-        @Override
-        public Boolean invoke( File file, VirtualChannel vc ) throws IOException, InterruptedException {
-            File f = new File( m_path );
-
-            return f.exists();
-        }
-
-        @Override
-        public void checkRoles( RoleChecker rc ) throws SecurityException {
-            //throw new UnsupportedOperationException( "Not supported yet." ); //To change body of generated methods, choose Tools | Templates.
-        }
     }
 
 }

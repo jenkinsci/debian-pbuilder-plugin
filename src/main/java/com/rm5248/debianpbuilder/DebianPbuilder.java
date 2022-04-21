@@ -56,6 +56,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  * master Jenkins instance.
  */
 public class DebianPbuilder extends Builder implements SimpleBuildStep {
+    private static final Logger LOGGER = Logger.getLogger( DebianPbuilder.class.getName() );
 
     private int numberCores;
     private String distribution;
@@ -72,6 +73,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String m_extraPackages;
     private boolean m_generateArtifactorySpecFile;
     private String m_artifactoryRepoName;
+    private PbuilderType m_pbuilderType;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -115,10 +117,16 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         QUILT
     }
 
+    private enum PbuilderType{
+        Cowbuilder,
+        PBuilder
+    }
+
     @DataBoundConstructor
     public DebianPbuilder(){
         numberCores = 1;
         m_generateArtifactorySpecFile = false;
+        m_pbuilderType = PbuilderType.Cowbuilder;
     }
 
     @Deprecated
@@ -211,6 +219,12 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         m_artifactoryRepoName = repoName;
     }
 
+    @DataBoundSetter
+    public void setpBuilderType( String pbuilderType ){
+        LOGGER.fine("Setting pbuilder type to " + pbuilderType );
+        m_pbuilderType = PbuilderType.valueOf( pbuilderType );
+    }
+
     public int getNumberCores(){
         return numberCores;
     }
@@ -286,6 +300,11 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return m_artifactoryRepoName;
     }
 
+    public String getpBuilderType(){
+        LOGGER.fine("Gettting pbuilder type of " + m_pbuilderType.toString() );
+        return m_pbuilderType.toString();
+    }
+
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
             throws InterruptedException, IOException {
@@ -307,7 +326,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             throws InterruptedException, IOException {
         String architecture = null;
         String snapshotVersion;
-        CowbuilderHelper cowHelp;
+        PbuilderInterface pbuildInterface;
         FilePath binariesLocation;
         FilePath dscFile = null;
         FilePath hookdir = null;
@@ -352,13 +371,14 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
 
-        architecture = getActualArchitecture( workspace, launcher, build, listener );
-        if( architecture != null && architecture.length() == 0 ){
-            listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
-            architecture = getStdoutOfProcess(workspace, launcher, listener,
+        String ourArch = getStdoutOfProcess(workspace, launcher, listener,
                             "dpkg-architecture",
                             "--query",
                             "DEB_TARGET_ARCH" );
+        architecture = getActualArchitecture( workspace, launcher, build, listener );
+        if( architecture != null && architecture.length() == 0 ){
+            listener.getLogger().println( "Architecture is 0-length string: using dpkg default");
+            architecture = ourArch;
         }
 
         if( getDebianDirLocation().equals( "." ) ){
@@ -492,17 +512,34 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         pbuildConfig.setOtherMirror( m_otherMirror );
         pbuildConfig.setExtraPackages( m_extraPackages );
 
-        //Now that we have our sources, run debootstrap
-        cowHelp = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
-                architecture, distribution,
-                new File( hookdir.toURI() ).getAbsolutePath(),
-                pbuildConfig);
+        if( m_pbuilderType == null ){
+            // Default to using cowbuilder if not set
+            m_pbuilderType = PbuilderType.Cowbuilder;
+        }
 
-        if( !cowHelp.createOrUpdateCowbuilder() ){
+        //Now that we have our sources, run debootstrap
+        if( m_pbuilderType == PbuilderType.Cowbuilder ){
+            pbuildInterface = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
+                    architecture, distribution,
+                    new File( hookdir.toURI() ).getAbsolutePath(),
+                    pbuildConfig);
+        }else if (m_pbuilderType == PbuilderType.PBuilder ){
+            pbuildInterface = new PbuilderHelper(workspace, launcher, listener.getLogger(),
+                    architecture, distribution,
+                    new File( hookdir.toURI() ).getAbsolutePath(),
+                    pbuildConfig);
+        }else{
+            listener.getLogger().println( "Pbuilder type invalid!" );
             return false;
         }
 
-        if( !cowHelp.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
+        listener.getLogger().println( "Using " + m_pbuilderType + " for our build" );
+
+        if( !pbuildInterface.createOrUpdateBase() ){
+            return false;
+        }
+
+        if( !pbuildInterface.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
             return false;
         }
 

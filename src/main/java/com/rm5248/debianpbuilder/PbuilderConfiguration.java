@@ -37,6 +37,7 @@ class PbuilderConfiguration {
     private String m_components;
     private SatisfyDependsResolver m_satisfyDependsCommand;
     private String m_otherMirror;
+    private String m_buildArch;
 
     PbuilderConfiguration(){
         m_useNetwork = false;
@@ -82,6 +83,10 @@ class PbuilderConfiguration {
 
     void setOtherMirror( String otherMirror ){
         m_otherMirror = otherMirror;
+    }
+
+    void setBuildArch( String buildArch ){
+        m_buildArch = buildArch;
     }
 
     String toConfigFileString(){
@@ -160,7 +165,13 @@ class PbuilderConfiguration {
         if( m_otherMirror != null && m_otherMirror.length() > 0 ){
             sb.append( "OTHERMIRROR=\"" );
             sb.append( m_otherMirror );
-            sb.append( "\"" );
+            sb.append( "\"\n" );
+        }
+
+        if( m_buildArch != null && m_buildArch.length() > 0 ){
+            sb.append( "ARCHITECTURE=" );
+            sb.append( m_buildArch );
+            sb.append( "\n" );
         }
 
         return sb.toString();
