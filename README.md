@@ -32,7 +32,7 @@ requirements that must be met on the node(s) that you wish to run on.  
     /etc/sudoers.d/jenkins): 
 
     ```shell
-    jenkins ALL=NOPASSWD: /usr/sbin/cowbuilder, /usr/sbin/chroot 
+    jenkins ALL=NOPASSWD: /usr/sbin/cowbuilder, /usr/sbin/chroot, /usr/sbin/pbuilder
     Defaults env_keep+="DEB_* DIST ARCH"
     ```
 
@@ -203,6 +203,14 @@ of two ways: either you can provide the orig.tar.gz through a pre-build
 step of some kind, or under the 'advanced' section there is a field for
 you to fill in the name of the package to checkout using the
 'pristine-tar' command.
+
+## Cowbuilder vs pbuilder
+
+This plugin allows you to use either Cowbuilder or Pbuilder to build packages.
+If you are cross-compiling, using PBuilder is probably faster than using
+Cowbuilder.  When cross-compiling, the rootfs will be your native architecture,
+and a cross-compiler will be used to compile the code.  This depends on any
+dependent packages being multiarch capable.
 
 ## Issue Tracking
 
