@@ -2,7 +2,6 @@ package com.rm5248.debianpbuilder;
 
 import hudson.FilePath;
 import hudson.Launcher;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.FileSystems;
@@ -55,7 +54,6 @@ public class PbuilderHelper extends PbuilderInterface {
 
         m_pbuilderrc = workspace.createTempFile( "pbuilderrc", null );
         m_pbuilderrc.act( new PbuilderConfigWriter( pbuilderConfig.toConfigFileString() ) );
-        m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
     }
 
     @Override
@@ -68,11 +66,8 @@ public class PbuilderHelper extends PbuilderInterface {
             return false;
         }
 
-        File io_outputFile = new File( outputDirectory.toURI() );
-        File io_sourceFile = new File( sourceFile.toURI() );
-
-        retValue = doBuild( io_outputFile.getAbsolutePath(),
-                io_sourceFile.getAbsolutePath(),
+        retValue = doBuild( outputDirectory.getName(),
+                sourceFile.getName(),
                 numCores );
 
         return retValue;
@@ -93,6 +88,7 @@ public class PbuilderHelper extends PbuilderInterface {
 
         Launcher.ProcStarter procStarter = m_launcher
             .launch()
+            .pwd(m_workspace)
             .stdout( m_logger )
             .cmds( "sudo",
                     "pbuilder",
@@ -102,7 +98,7 @@ public class PbuilderHelper extends PbuilderInterface {
                     "--host-arch",
                     getArch(),
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath(),
+                    m_pbuilderrc.getName(),
                     "--basetgz",
                     m_pbuilderBaseTgz.toString(),
                     "--distribution",
@@ -114,7 +110,7 @@ public class PbuilderHelper extends PbuilderInterface {
                     "--hookdir",
                     m_hookdir,
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath(),
+                    m_pbuilderrc.getName(),
                     "--buildresult",
                     outputDir,
                     sourceFile );
@@ -150,6 +146,7 @@ public class PbuilderHelper extends PbuilderInterface {
     private boolean createPbuilderBase() throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = m_launcher
             .launch()
+            .pwd(m_workspace)
             .stdout( m_logger )
             .cmds( "flock",
                     "-n",
@@ -162,7 +159,7 @@ public class PbuilderHelper extends PbuilderInterface {
                     "--host-arch",
                     getArch(),
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath(),
+                    m_pbuilderrc.getName(),
                     "--basetgz",
                     m_pbuilderBaseTgz.toString(),
                     "--debootstrap",
@@ -182,6 +179,7 @@ public class PbuilderHelper extends PbuilderInterface {
     private boolean updatePbuidlerBase() throws IOException, InterruptedException {
         Launcher.ProcStarter procStarter = m_launcher
             .launch()
+            .pwd(m_workspace)
             .stdout( m_logger )
             .cmds( "flock",
                     "-n",
@@ -194,7 +192,7 @@ public class PbuilderHelper extends PbuilderInterface {
                     "--basetgz",
                     m_pbuilderBaseTgz.toString(),
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath() );
+                    m_pbuilderrc.getName() );
         int status = procStarter.join();
 
         if( status != 0 ){

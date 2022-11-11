@@ -31,7 +31,6 @@ public abstract class PbuilderInterface {
     protected String m_hookdir;
     protected PrintStream m_logger;
     protected FilePath m_pbuilderrc;
-    protected File m_pbuilderrcAsFile;
     protected FilePath m_workspace;
 
     /**

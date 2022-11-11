@@ -6,7 +6,6 @@ import hudson.Launcher;
 import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.remoting.VirtualChannel;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,7 +62,6 @@ class CowbuilderHelper extends PbuilderInterface {
 
         m_pbuilderrc = workspace.createTempFile( "pbuilderrc", null );
         m_pbuilderrc.act( new PbuilderConfigWriter( pbuilderConfig.toConfigFileString() ) );
-        m_pbuilderrcAsFile = new File( m_pbuilderrc.toURI() );
     }
 
     @Override
@@ -89,6 +87,7 @@ class CowbuilderHelper extends PbuilderInterface {
     private boolean createCowbuilderBase() throws IOException, InterruptedException {
         ProcStarter procStarter = m_launcher
             .launch()
+                .pwd(m_workspace)
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
             .cmds( "flock",
@@ -112,7 +111,7 @@ class CowbuilderHelper extends PbuilderInterface {
                     "--debootstrapopts",
                     "--variant=buildd",
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath(),
+                    m_pbuilderrc.getName(),
                     "--hookdir",
                     m_hookdir );
         int status = procStarter.join();
@@ -129,6 +128,7 @@ class CowbuilderHelper extends PbuilderInterface {
         ProcStarter procStarter = m_launcher
             .launch()
                 .stdout( m_logger )
+                .pwd(m_workspace)
             .envs( getDistArchEnv() )
             .cmds( "flock",
                     "-n",
@@ -141,7 +141,7 @@ class CowbuilderHelper extends PbuilderInterface {
                     "--basepath",
                     m_cowbuilderBase.toString(),
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath() );
+                    m_pbuilderrc.getName() );
         int status = procStarter.join();
 
         if( status != 0 ){
@@ -177,11 +177,8 @@ class CowbuilderHelper extends PbuilderInterface {
             return false;
         }
 
-        File io_outputFile = new File( outputDirectory.toURI() );
-        File io_sourceFile = new File( sourceFile.toURI() );
-
-        retValue = doBuild( io_outputFile.getAbsolutePath(),
-                io_sourceFile.getAbsolutePath(),
+        retValue = doBuild( outputDirectory.getName(),
+                sourceFile.getName(),
                 numCores );
 
         return retValue;
@@ -203,6 +200,7 @@ class CowbuilderHelper extends PbuilderInterface {
 
         ProcStarter procStarter = m_launcher
             .launch()
+                .pwd(m_workspace)
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
             .cmds( "sudo",
@@ -222,7 +220,7 @@ class CowbuilderHelper extends PbuilderInterface {
                     "--hookdir",
                     m_hookdir,
                     "--configfile",
-                    m_pbuilderrcAsFile.getAbsolutePath() );
+                    m_pbuilderrc.getName() );
         int status = procStarter.join();
 
         if( status != 0 ){

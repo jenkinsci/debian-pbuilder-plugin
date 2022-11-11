@@ -529,12 +529,12 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         if( m_pbuilderType == PbuilderType.Cowbuilder ){
             pbuildInterface = new CowbuilderHelper(workspace, launcher, listener.getLogger(),
                     architecture, distribution,
-                    new File( hookdir.toURI() ).getAbsolutePath(),
+                    hookdir.getName(),
                     pbuildConfig);
         }else if (m_pbuilderType == PbuilderType.PBuilder ){
             pbuildInterface = new PbuilderHelper(workspace, launcher, listener.getLogger(),
                     architecture, distribution,
-                    new File( hookdir.toURI() ).getAbsolutePath(),
+                    hookdir.getName(),
                     pbuildConfig);
         }else{
             listener.getLogger().println( "Pbuilder type invalid!" );
