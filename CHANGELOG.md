@@ -1,6 +1,6 @@
 # Changelog
 
-##### Version 1.10(2022-11-20)
+##### Version 1.10(TBD)
 
 - Added ability to switch between using cowbuilder and using pbuilder.
   This can greatly speed up cross compiling by using a cross compiler.
