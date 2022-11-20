@@ -2,16 +2,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <jenkins.version>2.204.6</jenkins.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <java.level>8</java.level>
+        <jenkins.version>2.346.3</jenkins.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <java.level>11</java.level>
     </properties>
 
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.3</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>4.40</version><!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
     <groupId>com.rm5248</groupId>
@@ -42,12 +42,12 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
-            <version>1.7</version>
+            <version>1.24</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.14</version>
+            <version>2.24</version>
             <type>jar</type>
             <optional>true</optional>
         </dependency>
@@ -55,7 +55,7 @@
 
     <!-- This plugin requires at least java 8, -->
     <!-- but what we pull in from our parent POM only checks to java 7 -->
-    <build>
+<!--    <build>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -69,7 +69,7 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>
+    </build>-->
 
     <licenses>
         <license>
