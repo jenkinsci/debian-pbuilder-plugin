@@ -1,9 +1,11 @@
 # Changelog
 
-##### Version 1.10(TBD)
+##### Version 1.10(2022-11-20)
 
-- Added ability to switch between using cowbuilder and using pbuilder
+- Added ability to switch between using cowbuilder and using pbuilder.
+  This can greatly speed up cross compiling by using a cross compiler.
 - Added ability to generate a spec file for use with Artifactory
+- Fix issue where Jenkins master on Windows would cause file paths to be incorrect
 
 ##### Version 1.9(2022-04-06)
 
