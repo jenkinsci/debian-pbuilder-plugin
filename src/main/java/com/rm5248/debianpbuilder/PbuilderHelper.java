@@ -154,16 +154,12 @@ public class PbuilderHelper extends PbuilderInterface {
                     "sudo",
                     "pbuilder",
                     "create",
-                    "--architecture",  // When we create the pbuilder base, use host arch both times?
-                    m_hostArch,
                     "--host-arch",
                     m_hostArch,
                     "--configfile",
                     m_pbuilderrc.getName(),
                     "--basetgz",
                     m_pbuilderBaseTgz.toString(),
-                    "--debootstrap",
-                    getDebootstrap(),
                     "--distribution",
                     m_distribution );
         int status = procStarter.join();
