@@ -454,7 +454,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
         generateChanges(workspace, launcher, listener, packageName, snapshotVersion);
 
-        if(m_binariesDir == null || m_binariesDir.isBlank() ){
+        if(m_binariesDir == null || m_binariesDir.isEmpty() ){
             binariesLocation = workspace.createTempDir( "binaries", null );
         }else{
             FilePath fp = workspace.child(m_binariesDir);
