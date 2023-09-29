@@ -162,8 +162,6 @@ public class PbuilderHelper extends PbuilderInterface {
                     m_pbuilderrc.getName(),
                     "--basetgz",
                     m_pbuilderBaseTgz.toString(),
-                    "--debootstrap",
-                    getDebootstrap(),
                     "--distribution",
                     m_distribution );
         int status = procStarter.join();
