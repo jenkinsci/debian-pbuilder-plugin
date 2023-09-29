@@ -74,6 +74,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private boolean m_generateArtifactorySpecFile;
     private String m_artifactoryRepoName;
     private PbuilderType m_pbuilderType;
+    private String m_binariesDir;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -312,6 +313,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         LOGGER.fine("Gettting pbuilder type of " + m_pbuilderType.toString() );
         return m_pbuilderType.toString();
     }
+    
+    @DataBoundSetter
+    public void setBinariesDir(String binariesDir){
+        m_binariesDir = binariesDir;
+    }
+    
+    public String getBinariesDir(){
+        return m_binariesDir;
+    }
 
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
@@ -444,7 +454,13 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
 
         generateChanges(workspace, launcher, listener, packageName, snapshotVersion);
 
-        binariesLocation = workspace.createTempDir( "binaries", null );
+        if(m_binariesDir == null || m_binariesDir.isBlank() ){
+            binariesLocation = workspace.createTempDir( "binaries", null );
+        }else{
+            FilePath fp = workspace.child(m_binariesDir);
+            fp.mkdirs();
+            binariesLocation = fp;
+        }
         hookdir = workspace.child( "hookdir" );
         if( !hookdir.exists() ){
             hookdir.mkdirs();

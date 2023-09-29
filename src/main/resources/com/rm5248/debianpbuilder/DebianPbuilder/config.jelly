@@ -41,6 +41,9 @@
         <f:entry title="Extra Packages" field="extraPackages">
             <f:textbox/>
         </f:entry>
+        <f:entry title="Binaries Directory" field="binariesDir">
+            <f:textbox/>
+        </f:entry>
         <f:entry title="Generate Artifactory spec file" field="generateArtifactorySpecFile">
             <f:checkbox/>
         </f:entry>
