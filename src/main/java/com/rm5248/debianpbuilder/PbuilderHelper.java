@@ -154,8 +154,8 @@ public class PbuilderHelper extends PbuilderInterface {
                     "sudo",
                     "pbuilder",
                     "create",
-                    "--architecture", 
-                    m_buildArch,
+                    "--architecture",  // When we create the pbuilder base, use host arch both times?
+                    m_hostArch,
                     "--host-arch",
                     m_hostArch,
                     "--configfile",
