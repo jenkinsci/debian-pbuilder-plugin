@@ -26,19 +26,19 @@ public class PbuilderHelper extends PbuilderInterface {
             String hookdir,
             PbuilderConfiguration pbuilderConfig ) throws IOException, InterruptedException {
         m_logger = logger;
-        m_architecture = architecture;
+        m_hostArch = architecture;
         m_distribution = distribution;
         m_launcher = launcher;
         m_hookdir = hookdir;
         m_workspace = workspace;
 
-        setDpkgArchitecture();
+        setBuildArch();
 
-        if( m_architecture == null ){
-            m_architecture = m_dpkgArch;
+        if( m_hostArch == null ){
+            m_hostArch = m_buildArch;
         }
 
-        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_dpkgArch + ".tgz" );
+        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_hostArch + ".tgz" );
 
         String baseLockfile = "/var/run/lock/" + m_distribution + "-" + getArch();
         m_updateLockfile = baseLockfile + ".update";
@@ -94,9 +94,9 @@ public class PbuilderHelper extends PbuilderInterface {
                     "pbuilder",
                     "build",
                     "--architecture",
-                    m_dpkgArch,
+                    m_buildArch,
                     "--host-arch",
-                    getArch(),
+                    m_hostArch,
                     "--configfile",
                     m_pbuilderrc.getName(),
                     "--basetgz",
@@ -148,16 +148,16 @@ public class PbuilderHelper extends PbuilderInterface {
             .launch()
             .pwd(m_workspace)
             .stdout( m_logger )
-            .cmds( "flock",
+            .cmds("flock",
                     "-n",
                     m_updateLockfile,
                     "sudo",
                     "pbuilder",
                     "create",
-                    "--architecture",
-                    m_dpkgArch,
+                    "--architecture", 
+                    m_buildArch,
                     "--host-arch",
-                    getArch(),
+                    m_hostArch,
                     "--configfile",
                     m_pbuilderrc.getName(),
                     "--basetgz",

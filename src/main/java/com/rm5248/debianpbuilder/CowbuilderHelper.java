@@ -34,19 +34,19 @@ class CowbuilderHelper extends PbuilderInterface {
     CowbuilderHelper( FilePath workspace, Launcher launcher, PrintStream logger,
             String architecture, String distribution, String hookdir, PbuilderConfiguration pbuilderConfig ) throws IOException, InterruptedException {
         m_logger = logger;
-        m_architecture = architecture;
+        m_hostArch = architecture;
         m_distribution = distribution;
         m_launcher = launcher;
         m_hookdir = hookdir;
         m_workspace = workspace;
 
-        setDpkgArchitecture();
+        setBuildArch();
 
-        if( m_architecture == null ){
-            m_architecture = m_dpkgArch;
+        if( m_hostArch == null ){
+            m_hostArch = m_buildArch;
         }
 
-        m_cowbuilderBase = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_architecture );
+        m_cowbuilderBase = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_hostArch );
 
         String baseLockfile = "/var/run/lock/" + m_distribution + "-" + getArch();
         m_updateLockfile = baseLockfile + ".update";
@@ -90,7 +90,7 @@ class CowbuilderHelper extends PbuilderInterface {
                 .pwd(m_workspace)
                 .stdout( m_logger )
             .envs( getDistArchEnv() )
-            .cmds( "flock",
+            .cmds("flock",
                     "-n",
                     m_updateLockfile,
                     "sudo",
@@ -103,7 +103,7 @@ class CowbuilderHelper extends PbuilderInterface {
                     "--debootstrap",
                     getDebootstrap(),
                     "--architecture",
-                    m_architecture,
+                    m_hostArch,
                     "--debootstrapopts",
                     "--arch",
                     "--debootstrapopts",
@@ -160,7 +160,7 @@ class CowbuilderHelper extends PbuilderInterface {
         Map<String,String> newEnv = new HashMap<String,String>();
 
         newEnv.put( "DIST", m_distribution );
-        newEnv.put( "ARCH", m_architecture );
+        newEnv.put("ARCH", m_hostArch );
 
         return newEnv;
     }

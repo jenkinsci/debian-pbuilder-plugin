@@ -20,14 +20,22 @@ import org.jenkinsci.remoting.RoleChecker;
 
 /**
  * An interface to allow us to easily switch between using pbuilder or cowbuilder.
+ * 
+ *  Notes on architectures:
+ * 
+ * https://gcc.gnu.org/onlinedocs/gccint/Configure-Terms.html:
+ * "build is the machine you’re building on (no change there), host is the machine you’re building for"
+ * 
+ * Pbuilder option "--architecture" is the same as "build architecture"
+ * Pbuilder option "--host-arch" is the machine we are building for
  */
 public abstract class PbuilderInterface {
     private static final Logger LOGGER = Logger.getLogger( PbuilderInterface.class.getName() );
 
-    protected String m_architecture;
+    protected String m_hostArch;
     protected String m_distribution;
     protected Launcher m_launcher;
-    protected String m_dpkgArch;
+    protected String m_buildArch;
     protected String m_hookdir;
     protected PrintStream m_logger;
     protected FilePath m_pbuilderrc;
@@ -51,14 +59,14 @@ public abstract class PbuilderInterface {
     abstract boolean createOrUpdateBase() throws IOException, InterruptedException;
 
     protected final String getDebootstrap(){
-        if( m_dpkgArch.equals( m_architecture ) ){
+        if( m_buildArch.equals(m_hostArch ) ){
             return "debootstrap";
         }else{
             return "qemu-debootstrap";
         }
     }
 
-    protected final void setDpkgArchitecture() throws IOException, InterruptedException {
+    protected final void setBuildArch() throws IOException, InterruptedException {
          Launcher.ProcStarter procStarter = m_launcher
             .launch()
             .cmds( "dpkg", "--print-architecture" )
@@ -74,7 +82,7 @@ public abstract class PbuilderInterface {
         InputStream is = proc.getStdout();
         if( is != null ){
             Scanner scan = new Scanner( is, "UTF-8" );
-            m_dpkgArch = scan.nextLine();
+            m_buildArch = scan.nextLine();
         }
     }
 
@@ -85,11 +93,11 @@ public abstract class PbuilderInterface {
      * @return
      */
     protected final String getArch(){
-        if( m_architecture.equals( "all" ) ){
-            return m_dpkgArch;
+        if( m_hostArch.equals( "all" ) ){
+            return m_buildArch;
         }
 
-        return m_architecture;
+        return m_hostArch;
     }
 
     /**
