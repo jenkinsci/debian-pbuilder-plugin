@@ -38,6 +38,7 @@ class PbuilderConfiguration {
     private SatisfyDependsResolver m_satisfyDependsCommand;
     private String m_otherMirror;
     private String m_buildArch;
+    private String m_bindMounts;
 
     PbuilderConfiguration(){
         m_useNetwork = false;
@@ -87,6 +88,10 @@ class PbuilderConfiguration {
 
     void setBuildArch( String buildArch ){
         m_buildArch = buildArch;
+    }
+    
+    void setBindMounts( String bindMounts ){
+        m_bindMounts = bindMounts;
     }
 
     String toConfigFileString(){
@@ -171,6 +176,12 @@ class PbuilderConfiguration {
         if( m_buildArch != null && m_buildArch.length() > 0 ){
             sb.append( "ARCHITECTURE=" );
             sb.append( m_buildArch );
+            sb.append( "\n" );
+        }
+        
+        if( m_bindMounts != null && m_bindMounts.length() > 0 ){
+            sb.append( "BINDMOUNTS=" );
+            sb.append( m_bindMounts );
             sb.append( "\n" );
         }
 

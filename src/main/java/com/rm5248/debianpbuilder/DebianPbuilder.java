@@ -75,6 +75,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private String m_artifactoryRepoName;
     private PbuilderType m_pbuilderType;
     private String m_binariesDir;
+    private String m_bindMounts;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -322,6 +323,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     public String getBinariesDir(){
         return m_binariesDir;
     }
+    
+    @DataBoundSetter
+    public void setBindMounts(String bindMounts){
+        m_bindMounts = bindMounts;
+    }
+    
+    public String getBindMounts(){
+        return m_bindMounts;
+    }
 
     @Override
     public void perform(Run<?,?> run, FilePath workspace, Launcher launcher, TaskListener listener )
@@ -352,6 +362,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         EnvVars envVars = build.getEnvironment(listener);
         PackageType type;
 
+        pbuildConfig.setBindMounts( m_bindMounts );
+        
         if( !launcher.isUnix() ){
             listener.getLogger().println( "Can't build: not on Unix-like system" );
             return false;
