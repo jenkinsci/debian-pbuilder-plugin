@@ -205,6 +205,130 @@ pipeline{
 }
 ```
 
+## Using custom deb packages
+
+When building a Debian package, all of the dependencies must be installed
+into the rootfs before the package can be built.  If these packages are
+not in the official repos, we must somehow get them into the rootfs.
+
+There are several ways to do this:
+
+1. Setup your own repository and add your repository into the rootfs.
+In order to do this, you need to make a 'D' hook script(something like
+D20-repos) and have it add in your repostory:
+
+```
+echo "deb http://my-repository.example.com main" > /etc/apt/sources.list.d/my-repo.list
+apt-get update
+```
+
+2. Build your dependencies as part of your Jenkinsfile, or in a separate
+job.  In order to help facilitate this, you can set the BINDMOUNTS that pbulider
+uses, in addition to setting the output directory to be stable.
+
+Here is an example using dbus-cxx.  First, we need to build the libsigc++-3.0
+dependency:
+
+```groovy
+pipeline{
+
+    agent any
+
+    stages{
+        stage("clean"){
+            steps{
+                cleanWs()
+            }
+        }
+
+        stage("checkout"){
+            steps{
+                dir('source'){
+                    git 'https://github.com/dbus-cxx/libsigc--3.0.git'
+                }
+            }
+        }
+
+        stage('build'){
+            steps{
+                debianPbuilder additionalBuildResults: '',
+                    architecture: '',
+                    artifactoryRepoName: '',
+                    components: '',
+                    distribution: 'bullseye',
+                    extraPackages: '',
+                    keyring: '',
+                    mirrorSite: 'https://deb.debian.org/debian',
+                    otherMirror: '',
+                    pbuilderType: 'PBuilder', pristineTarName: 'libsigc++-3.0_3.0.3.orig.tar.xz'
+            }
+        }
+    }
+}
+```
+
+Next, we will build dbus-cxx utilizing the Copy Artifacts plugin in order to
+grab the pre-built dependencies.  In the chroot before we build we will also
+tell apt to create the needed files and update its database.  Note that we
+also need to set the 'bindMounts' parameter in order to ensure that the folder
+containing the deb files will be available inside of the chroot.
+
+```groovy
+pipeline{
+
+    agent any
+
+    stages{
+        stage("clean"){
+            steps{
+                cleanWs()
+            }
+        }
+
+        stage("checkout"){
+            steps{
+                dir('source'){
+                    git 'https://github.com/dbus-cxx/dbus-cxx.git'
+                }
+            }
+        }
+
+        stage('build'){
+            steps{
+		// Grab our dependencies from libsigc++
+                copyArtifacts fingerprintArtifacts: true, projectName: 'libsigc++', selector: lastSuccessful(), target: 'binaries'
+                
+		// Make a hook that will build up the meta-data for apt
+                dir('hookdir'){
+                    sh '''#/bin/bash
+                    cat <<EOF > D05-local-repo
+                    (cd /binaries; apt-ftparchive packages . > Packages; apt-ftparchive release . > Release)
+                    echo \"deb [trusted=yes] file:///binaries ./\" > /etc/apt/sources.list.d/local-repo.list
+                    apt-get update
+EOF
+                    '''
+                }
+                
+                debianPbuilder additionalBuildResults: '',
+                    architecture: '',
+                    artifactoryRepoName: '',
+                    components: '',
+                    distribution: 'bullseye',
+                    extraPackages: 'apt-utils',
+                    keyring: '',
+                    mirrorSite: 'https://deb.debian.org/debian',
+                    otherMirror: '',
+                    pbuilderType: 'PBuilder', 
+                    pristineTarName: '',
+                    bindMounts: 'binaries'
+            }
+        }
+    }
+}
+
+```
+
+See also: https://askubuntu.com/questions/3623/how-can-i-use-local-deb-files-in-my-pbuilder-builds
 
 ## Package Versioning
 
