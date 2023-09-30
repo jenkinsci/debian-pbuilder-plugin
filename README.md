@@ -36,7 +36,7 @@ requirements that must be met on the node(s) that you wish to run on.  
     Defaults env_keep+="DEB_* DIST ARCH"
     ```
 
-    (this assumes that Jenkins is running under the Jenkins user)
+    (this assumes that Jenkins is running under the jenkins user)
 
 ## Using the Plugin
 
@@ -165,7 +165,46 @@ stage('build'){
 }
 ```
 
-  
+** Pipeline setup - declarative **
+
+```groovy
+pipeline{
+    
+    agent any
+    
+    stages{
+        stage("clean"){
+            steps{
+                cleanWs()
+            }   
+        }
+        
+        stage("checkout"){
+            steps{
+                dir('source'){
+                    git 'https://github.com/rm5248/CSerial.git'
+                }
+            }
+        }
+        
+        stage('build'){
+            steps{
+                debianPbuilder additionalBuildResults: '', 
+                    architecture: 'armhf', 
+                    artifactoryRepoName: '', 
+                    components: '', 
+                    distribution: 'buster', 
+                    extraPackages: '', 
+                    keyring: '', 
+                    mirrorSite: 'https://deb.debian.org/debian', 
+                    otherMirror: '',
+                    pbuilderType: 'PBuilder', pristineTarName: ''
+            }
+        }
+    }
+}
+```
+
 
 ## Package Versioning
 
