@@ -38,7 +38,7 @@ public class PbuilderHelper extends PbuilderInterface {
             m_hostArch = m_buildArch;
         }
 
-        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_hostArch + ".tgz" );
+        m_pbuilderBaseTgz = FileSystems.getDefault().getPath( "/var/cache/pbuilder/base-" + m_distribution + "-" + m_buildArch + ".tgz" );
 
         String baseLockfile = "/var/run/lock/" + m_distribution + "-" + getArch();
         m_updateLockfile = baseLockfile + ".update";
@@ -154,8 +154,8 @@ public class PbuilderHelper extends PbuilderInterface {
                     "sudo",
                     "pbuilder",
                     "create",
-                    "--host-arch",
-                    m_hostArch,
+                    "--architecture",
+                    m_buildArch,
                     "--configfile",
                     m_pbuilderrc.getName(),
                     "--basetgz",
