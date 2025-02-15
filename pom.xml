@@ -2,16 +2,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <jenkins.version>2.346.3</jenkins.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <java.level>11</java.level>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.346</jenkins.baseline>
+        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     </properties>
 
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.40</version><!-- which version of Jenkins is this plugin built against? -->
+        <version>4.51</version><!-- which version of Jenkins is this plugin built against? -->
+        <relativePath />
     </parent>
 
     <groupId>com.rm5248</groupId>
@@ -22,6 +22,17 @@
 
     <name>Debian Pbuilder</name>
     <description>Build Debian packages in a pbuilder environment</description>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>1763.v092b_8980a_f5e</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
     <repositories>
@@ -42,12 +53,10 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>structs</artifactId>
-            <version>1.24</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>2.24</version>
             <type>jar</type>
             <optional>true</optional>
         </dependency>
@@ -87,18 +96,6 @@
     <issueManagement>
         <url />
     </issueManagement>
-
-    <developers>
-        <developer>
-            <email>robert.middleton@rm5248.com</email>
-            <id>rm5248</id>
-            <name>Robert Middleton</name>
-            <url>https://www.rm5248.com</url>
-            <roles>
-                <role>Main Developer</role>
-            </roles>
-        </developer>
-    </developers>
 
     <reporting>
         <plugins>
