@@ -16,10 +16,10 @@ import hudson.tasks.BuildStepDescriptor;
 import java.io.File;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -1080,7 +1080,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest2 req, JSONObject formData) throws FormException {
             jenkinsEmail = formData.getString( "jenkinsEmail" );
             packageVersionFormat = formData.getString( "packageVersionFormat" );
             defaultDebianDirLocation = formData.getString( "defaultDebianDirLocation" );
