@@ -4,6 +4,7 @@ import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.FilePath.FileCallable;
 import hudson.Proc;
 import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
@@ -11,6 +12,7 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import java.io.File;
@@ -20,6 +22,7 @@ import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.QueryParameter;
 
 import jakarta.servlet.ServletException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -35,6 +38,7 @@ import java.util.regex.Pattern;
 import jenkins.tasks.SimpleBuildStep;
 import jenkins.util.BuildListenerAdapter;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundSetter;
 
 /**
@@ -776,47 +780,75 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         return scan.nextLine();
     }
 
+    private static final class ChangelogUpdater implements FileCallable<Void>{
+
+        private static final long serialVersionUID = 20260205;
+        private final String m_packageName;
+        private final String m_snapshotVersion;
+        private final String m_email;
+
+        ChangelogUpdater(String packageName, String snapshotVersion, String email){
+            m_packageName = packageName;
+            m_snapshotVersion = snapshotVersion;
+            m_email = email;
+        }
+
+        @Override
+        public Void invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+            StringBuilder strBuild = new StringBuilder();
+
+            try(Scanner scan = new Scanner( f, "UTF-8" )){
+                String debEmail = "Debian Pbuilder Autobuilder <" +
+                        m_email + ">";
+                java.time.ZonedDateTime now = java.time.ZonedDateTime.now();
+                DateTimeFormatter dtFormat = DateTimeFormatter.ofPattern( "ccc, dd MMM YYYY HH:mm:ss Z");
+
+                strBuild.append( m_packageName );
+                strBuild.append( " (" );
+                strBuild.append( m_snapshotVersion );
+                strBuild.append( ") UNRELEASED; urgency=low" );
+                strBuild.append( System.lineSeparator() );
+                strBuild.append( System.lineSeparator() );
+
+                strBuild.append( "  ** SNAPSHOT Build **" );
+                strBuild.append( System.lineSeparator() );
+                strBuild.append( System.lineSeparator() );
+
+                strBuild.append( " -- " );
+                strBuild.append( debEmail );
+                strBuild.append( "  " );
+                strBuild.append( now.format( dtFormat ) );
+                strBuild.append( System.lineSeparator() );
+                strBuild.append( System.lineSeparator() );
+
+                while( scan.hasNextLine() ){
+                    strBuild.append( scan.nextLine() );
+                    strBuild.append( System.lineSeparator() );
+                }
+            }
+
+            FileOutputStream fos = new FileOutputStream(f);
+            try(Writer w = new OutputStreamWriter( fos, "UTF-8" )){
+                w.write( strBuild.toString() );
+            }
+
+            return null;
+        }
+
+        @Override
+        public void checkRoles(RoleChecker checker) throws SecurityException {}
+
+    }
+
     /**
      * Force update the changelog.  Don't use any of the debian scripts to update,
      * since we just want new stuff + old.  This is what jenkins-debian-glue does with SVN snapshots.
      *
      */
     private void updateChangelog( Launcher launcher, FilePath changelog, String packageName, String snapshotVersion ) throws IOException, InterruptedException {
-        Scanner scan = new Scanner( changelog.read(), "UTF-8" );
-        StringBuilder strBuild = new StringBuilder();
-        String debEmail = "Debian Pbuilder Autobuilder <" +
-                getEmail(launcher) + ">";
-        java.time.ZonedDateTime now = java.time.ZonedDateTime.now();
-        DateTimeFormatter dtFormat = DateTimeFormatter.ofPattern( "ccc, dd MMM YYYY HH:mm:ss Z");
+        String email = getEmail(launcher);
 
-        strBuild.append( packageName );
-        strBuild.append( " (" );
-        strBuild.append( snapshotVersion );
-        strBuild.append( ") UNRELEASED; urgency=low" );
-        strBuild.append( System.lineSeparator() );
-        strBuild.append( System.lineSeparator() );
-
-        strBuild.append( "  ** SNAPSHOT Build **" );
-        strBuild.append( System.lineSeparator() );
-        strBuild.append( System.lineSeparator() );
-
-        strBuild.append( " -- " );
-        strBuild.append( debEmail );
-        strBuild.append( "  " );
-        strBuild.append( now.format( dtFormat ) );
-        strBuild.append( System.lineSeparator() );
-        strBuild.append( System.lineSeparator() );
-
-        while( scan.hasNextLine() ){
-            strBuild.append( scan.nextLine() );
-            strBuild.append( System.lineSeparator() );
-        }
-
-        scan.close();
-
-        Writer w = new OutputStreamWriter( changelog.write(), "UTF-8" );
-        w.write( strBuild.toString() );
-        w.close();
+        changelog.act(new ChangelogUpdater(packageName, snapshotVersion, email));
     }
 
     private String getEmail( Launcher launcher ) throws IOException, InterruptedException{
