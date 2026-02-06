@@ -89,6 +89,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         "stretch",
         "buster",
         "bullseye",
+        "bookworm",
+        "trixie",
+        "forky",
+        "duke",
         "sid"
     };
 
@@ -105,7 +109,10 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         "saucy",
         "raring",
         "quantal",
-        "precise"
+        "precise",
+        "jammy",
+        "noble",
+        "oracular"
     };
 
     private enum PackageType{
