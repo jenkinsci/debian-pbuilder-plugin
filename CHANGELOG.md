@@ -1,5 +1,14 @@
 # Changelog
 
+##### Version 1.12(2026-04-05)
+
+- Update minimal Jenkins version
+- Fix building on non-master nodes
+
+##### Version 1.11(2023-10-01)
+
+- Various fixes mostly related to cross-compiling
+
 ##### Version 1.10(2022-11-20)
 
 - Added ability to switch between using cowbuilder and using pbuilder.
