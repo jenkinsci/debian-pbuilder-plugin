@@ -14,6 +14,9 @@
         <f:entry title="Build as tag" field="buildAsTag">
             <f:checkbox/>
         </f:entry>
+        <f:entry title="Put binaries in separate folders(based on arch and distro)" field="binariesSeparateFolders">
+            <f:checkbox/>
+        </f:entry>
         <f:entry title="Additional Build Results" field="additionalBuildResults">
             <f:textbox/>
         </f:entry>

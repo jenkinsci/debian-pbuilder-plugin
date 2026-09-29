@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -71,6 +72,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     private PbuilderType m_pbuilderType;
     private String m_binariesDir;
     private String m_bindMounts;
+    private boolean m_binariesSeparateFolders;
 
     private static final String[] DEBIAN_DISTRIBUTIONS = {
         "buzz",
@@ -231,6 +233,15 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }catch( Exception ex ){
             m_pbuilderType = PbuilderType.Cowbuilder;
         }
+    }
+
+    @DataBoundSetter
+    public void setBinariesSeparateFolders(boolean separate){
+        m_binariesSeparateFolders = separate;
+    }
+
+    public boolean getBinariesSeparateFolders(){
+        return m_binariesSeparateFolders;
     }
 
     public int getNumberCores(){
@@ -466,15 +477,8 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
 
-        generateChanges(workspace, launcher, listener, packageName, snapshotVersion);
+        generateChanges(workspace, launcher, listener, packageName, snapshotVersion);       
 
-        if(m_binariesDir == null || m_binariesDir.isEmpty() ){
-            binariesLocation = workspace.createTempDir( "binaries", null );
-        }else{
-            FilePath fp = workspace.child(m_binariesDir);
-            fp.mkdirs();
-            binariesLocation = fp;
-        }
         hookdir = workspace.child( "hookdir" );
         if( !hookdir.exists() ){
             hookdir.mkdirs();
@@ -505,6 +509,26 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         //user provided a distribution, override automatic settings
         if( this.distribution != null && this.distribution.length() > 0 ){
             distribution = this.distribution;
+        }
+
+        String baseBinaryDir;
+        if(m_binariesDir == null || m_binariesDir.isEmpty()){
+            baseBinaryDir = "binaries";
+        }else{
+            baseBinaryDir = m_binariesDir;
+        }
+
+        String finalBinaryDir;
+        if(m_binariesSeparateFolders){
+            FilePath fp = workspace.child(baseBinaryDir).child(distribution).child(architecture);
+            fp.mkdirs();
+            binariesLocation = fp;
+            finalBinaryDir = baseBinaryDir + "/" + distribution + "/" + architecture + "/";
+        }else{
+            FilePath fp = workspace.child(baseBinaryDir);
+            fp.mkdirs();
+            binariesLocation = fp;
+            finalBinaryDir = baseBinaryDir + "/";
         }
 
         pbuildConfig.setNetwork( true );
@@ -577,18 +601,30 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             return false;
         }
 
-        if( !pbuildInterface.buildInEnvironment( binariesLocation, dscFile, numberCores ) ){
+        URI baseURI = workspace.toURI();
+        URI binariesLocationURI = binariesLocation.toURI();
+        if( !pbuildInterface.buildInEnvironment( baseURI.relativize(binariesLocationURI).toString(),
+                dscFile, numberCores ) ){
             return false;
         }
 
 
         Map<String,String> files = new HashMap<String,String>();
         for( FilePath path : binariesLocation.list() ){
-            files.put( path.getName(), path.getName() );
+//            files.put(relativeBinariesPath + path.getName(),  path.getName() );
+//            files.put(path.getName(),  relativeBinariesPath + path.getName() );
+//            files.put(relativeBinariesPath + path.getName(), relativeBinariesPath + path.getName() );
+LOGGER.info("archiving " + binariesLocation.toURI() + path.getName());
+            files.put(path.getName(),  "binaries/noble/amd64/" + path.getName() );
+            files.put("/fizz/buzz/" + path.getName(),  path.getName() );
         }
 
+        files.forEach((key, value) ->{
+            LOGGER.info(key + ":" + value);
+        });
+
         BuildListenerAdapter bl = new BuildListenerAdapter( listener );
-        build.pickArtifactManager().archive( binariesLocation, launcher, bl, files );
+        build.pickArtifactManager().archive( workspace.child(baseBinaryDir), launcher, bl, files );
 
         if( m_generateArtifactorySpecFile &&
                 m_artifactoryRepoName != null &&

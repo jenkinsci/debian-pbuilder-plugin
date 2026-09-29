@@ -57,7 +57,7 @@ public class PbuilderHelper extends PbuilderInterface {
     }
 
     @Override
-    boolean buildInEnvironment(FilePath outputDirectory, FilePath sourceFile, int numCores) throws IOException, InterruptedException {
+    boolean buildInEnvironment(String outputDirectory, FilePath sourceFile, int numCores) throws IOException, InterruptedException {
         boolean retValue;
 
         if( outputDirectory == null || sourceFile == null ){
@@ -66,7 +66,7 @@ public class PbuilderHelper extends PbuilderInterface {
             return false;
         }
 
-        retValue = doBuild( outputDirectory.getName(),
+        retValue = doBuild( outputDirectory,
                 sourceFile.getName(),
                 numCores );
 
