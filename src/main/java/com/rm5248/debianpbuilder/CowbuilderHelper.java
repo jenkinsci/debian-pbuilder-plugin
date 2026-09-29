@@ -158,7 +158,7 @@ class CowbuilderHelper extends PbuilderInterface {
     @Override
     @edu.umd.cs.findbugs.annotations.SuppressFBWarnings( value="NP_LOAD_OF_KNOWN_NULL_VALUE",
                     justification="Does not produce valid output(load of known null at end of try block)" )
-    boolean buildInEnvironment( FilePath outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
+    boolean buildInEnvironment( String outputDirectory, FilePath sourceFile, int numCores ) throws IOException, InterruptedException {
         boolean retValue;
 
         if( outputDirectory == null || sourceFile == null ){
@@ -167,7 +167,7 @@ class CowbuilderHelper extends PbuilderInterface {
             return false;
         }
 
-        retValue = doBuild( outputDirectory.getName(),
+        retValue = doBuild( outputDirectory,
                 sourceFile.getName(),
                 numCores );
 

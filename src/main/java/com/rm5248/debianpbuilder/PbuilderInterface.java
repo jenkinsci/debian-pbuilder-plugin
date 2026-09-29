@@ -51,7 +51,7 @@ public abstract class PbuilderInterface {
      * @throws IOException
      * @throws InterruptedException
      */
-    abstract boolean buildInEnvironment( FilePath outputDirectory,
+    abstract boolean buildInEnvironment( String outputDirectory,
             FilePath sourceFile,
             int numCores )
             throws IOException, InterruptedException;
