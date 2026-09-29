@@ -609,22 +609,19 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
         }
 
 
+        // Archive the built files, keeping the same directory structure that they
+        // have in the workspace (e.g. binaries/noble/amd64/foo.deb)
         Map<String,String> files = new HashMap<String,String>();
         for( FilePath path : binariesLocation.list() ){
-//            files.put(relativeBinariesPath + path.getName(),  path.getName() );
-//            files.put(path.getName(),  relativeBinariesPath + path.getName() );
-//            files.put(relativeBinariesPath + path.getName(), relativeBinariesPath + path.getName() );
-LOGGER.info("archiving " + binariesLocation.toURI() + path.getName());
-            files.put(path.getName(),  "binaries/noble/amd64/" + path.getName() );
-            files.put("/fizz/buzz/" + path.getName(),  path.getName() );
+            if( path.isDirectory() ){
+                continue;
+            }
+            String relativePath = finalBinaryDir + path.getName();
+            files.put( relativePath, relativePath );
         }
 
-        files.forEach((key, value) ->{
-            LOGGER.info(key + ":" + value);
-        });
-
         BuildListenerAdapter bl = new BuildListenerAdapter( listener );
-        build.pickArtifactManager().archive( workspace.child(baseBinaryDir), launcher, bl, files );
+        build.pickArtifactManager().archive( workspace, launcher, bl, files );
 
         if( m_generateArtifactorySpecFile &&
                 m_artifactoryRepoName != null &&
