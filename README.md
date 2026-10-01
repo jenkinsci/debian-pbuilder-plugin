@@ -5,13 +5,6 @@ This plugin allows you to build deb packages in a pbuilder environment.
 This plugin is based largely off of [jenkins-debian-glue.](
 https://jenkins-debian-glue.org/)
 
-Find pre-built versions of this plugin [on this Jenkins instance!](
-https://jenkins.rm5248.com/job/debian-pbuilder/)
-
-[![Build Status](
-https://jenkins.rm5248.com/buildStatus/icon?job=debian-pbuilder)](
-https://jenkins.rm5248.com/job/debian-pbuilder/)
-
 ## System Setup
 
 Before you can successfully run the plugin, there are certain
@@ -381,6 +374,4 @@ that get installed into the rootfs must install pkgconfig files into
 
 ## Issue Tracking
 
-Please file any bugs that you may find on the Jenkins JIRA, using the
-debian-pbuilder-plugin component.  [Click here](https://issues.jenkins-ci.org/issues/?filter=18140)
-for all open issues.
+Please file any issues on the github repository.
