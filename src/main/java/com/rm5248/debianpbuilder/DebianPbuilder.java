@@ -628,7 +628,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
                 m_artifactoryRepoName.length() > 1 ){
             writeArtifactorySpecFile(
                     workspace,
-                    binariesLocation,
+                    finalBinaryDir,
                     dscFile,
                     packageName,
                     distribution,
@@ -1037,7 +1037,7 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
     }
 
     private void writeArtifactorySpecFile(FilePath workspace,
-            FilePath binariesLocation,
+            String binariesDir,
             FilePath dscFile,
             String sourceName,
             String distribution,
@@ -1045,17 +1045,17 @@ public class DebianPbuilder extends Builder implements SimpleBuildStep {
             String repoName) throws IOException, InterruptedException{
         String specFileContents = "{\"files\":["
                 + "{"
-                + "\"pattern\":\"" + binariesLocation.getName() + "/*.deb\","
+                + "\"pattern\":\"" + binariesDir + "*.deb\","
                 + "\"target\":\"" + repoName + "/pool/" + sourceName + "/\","
                 + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;deb.architecture=" + architecture + "\""
                 + "},"
                 + "{"
-                + "\"pattern\":\"" + binariesLocation.getName() + "/*.tar*\","
+                + "\"pattern\":\"" + binariesDir + "*.tar*\","
                 + "\"target\":\"" + repoName + "/pool/" + sourceName + "/\","
                 + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;\""
                 + "},"
                 + "{"
-                + "\"pattern\":\"" + binariesLocation.getName() + "/*.dsc\","
+                + "\"pattern\":\"" + binariesDir + "*.dsc\","
                 + "\"target\":\"" + repoName + "/pool/" + sourceName + "/\","
                 + "\"props\":\"deb.distribution=" + distribution + ";deb.component=main;\""
                 + "}"
